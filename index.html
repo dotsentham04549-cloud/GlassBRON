@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Бронирование стёкол — расчёт и раскрой</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1E3A4C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Бронь стёкол">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F0EB; --surface:#FFFFFF; --field:#F7F6F2; --ink:#14191E; --muted:#6A7076; --faint:#9AA0A5;
+  --line:#E3DFD6; --line-strong:#CFCAC0; --accent:#1E3A4C; --accent-ink:#FFFFFF; --brass:#9C7429;
+  --film:#DCE9EE; --film-edge:#7FA3B4; --warn:#9B4A1C; --warn-soft:#F5E3D6; --good:#2F6B45; --bad:#9B2C2C;
+  --sans:"IBM Plex Sans","Segoe UI",Roboto,Arial,sans-serif;
+  --cond:"IBM Plex Sans Condensed","IBM Plex Sans","Arial Narrow",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101417; --surface:#171D21; --field:#1D2429; --ink:#E8EAEB; --muted:#9AA3A9; --faint:#6E777D;
+    --line:#283137; --line-strong:#36414A; --accent:#8FB8CC; --accent-ink:#0F1418; --brass:#D2A65A;
+    --film:#22343D; --film-edge:#4F7A8D; --warn:#E39B6B; --warn-soft:#3D2A1E; --good:#7CC497; --bad:#E58A8A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101417; --surface:#171D21; --field:#1D2429; --ink:#E8EAEB; --muted:#9AA3A9; --faint:#6E777D;
+  --line:#283137; --line-strong:#36414A; --accent:#8FB8CC; --accent-ink:#0F1418; --brass:#D2A65A;
+  --film:#22343D; --film-edge:#4F7A8D; --warn:#E39B6B; --warn-soft:#3D2A1E; --good:#7CC497; --bad:#E58A8A;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* top bar */
+.topbar{background:var(--accent);color:var(--accent-ink)}
+.topbar .in{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-family:var(--cond);font-weight:600;letter-spacing:.16em;text-transform:uppercase;font-size:13px}
+.brand b{font-weight:600;padding-right:12px;margin-right:12px;border-right:1px solid color-mix(in srgb,var(--accent-ink) 35%,transparent)}
+.topbar .actions{display:flex;gap:8px;flex-wrap:wrap}
+.topbar button{background:transparent;color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent-ink) 45%,transparent)}
+.topbar button.solid{background:var(--accent-ink);color:var(--accent);border-color:var(--accent-ink)}
+
+.wrap{max-width:1240px;margin:0 auto;padding:26px 20px 56px}
+.head h1{font-weight:600;font-size:clamp(22px,3.4vw,30px);letter-spacing:-.015em;line-height:1.15;margin:0 0 6px}
+.head p{color:var(--muted);margin:0;max-width:70ch}
+.grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;margin-top:22px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:minmax(0,1fr)}}
+.grid>*,.stack>*{min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 20px}
+.stack>.card+.card{margin-top:16px}
+.kicker{font-family:var(--cond);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:10px}
+.kicker::after{content:"";flex:1;height:1px;background:var(--line)}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px 14px}
+.fields.wide{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted)}
+input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%;min-width:0}
+input[inputmode]{font-family:var(--mono);font-size:15px}
+input:focus-visible,button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=checkbox],input[type=radio]{width:18px;height:18px;padding:0;accent-color:var(--accent)}
+.note{margin:12px 0 0;font-size:13px;color:var(--muted)}
+.note b{color:var(--ink);font-weight:600}
+button{font:inherit;font-size:14px;font-weight:500;cursor:pointer;border-radius:4px;padding:9px 14px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.x{padding:5px 8px;color:var(--faint);border-color:transparent;background:transparent}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+details.card summary{cursor:pointer;list-style:none}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary .kicker{margin:0}
+details.card[open] summary .kicker{margin-bottom:14px}
+.objs{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
+.objs .row2{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap}
+.objs .row2 select{flex:1 1 180px;width:auto}
+.zones{display:flex;flex-wrap:wrap;gap:8px}
+.zones label{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:4px;padding:8px 12px;cursor:pointer;font-size:14px}
+.zones label:has(input:checked){border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+
+.tscroll{overflow-x:auto}
+table.panes{width:100%;border-collapse:collapse}
+.panes th{font-weight:500;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 4px 8px;white-space:nowrap}
+.panes td{padding:3px 4px}
+.panes td input{padding:7px 7px;min-width:56px}
+.panes td.nm input{min-width:130px;font-family:var(--sans)}
+.panes td.area{white-space:nowrap;color:var(--muted);font-family:var(--mono);font-size:13px;text-align:right}
+.panes td.c{text-align:center}
+
+/* summary */
+aside.card{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px)}
+@media (max-width:920px){aside.card{position:static}}
+.total-label{font-size:12.5px;color:var(--muted)}
+.total{font-family:var(--mono);font-weight:500;font-size:clamp(30px,4.6vw,40px);letter-spacing:-.02em;line-height:1.1;margin:2px 0 4px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:4px;margin-bottom:14px}
+.kpi{padding:10px 12px}
+.kpi:nth-child(odd){border-right:1px solid var(--line)}
+.kpi:nth-child(n+3){border-top:1px solid var(--line)}
+.kpi span{display:block;font-size:12px;color:var(--muted)}
+.kpi strong{font-family:var(--mono);font-weight:500;font-size:18px}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.rows div{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.rows div span:first-child{color:var(--muted)}
+.rows div span:last-child{text-align:right;font-family:var(--mono);font-size:13.5px}
+.rows div.ind span:first-child{padding-left:14px}
+.warns{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.warn{background:var(--warn-soft);border-left:2px solid var(--warn);padding:8px 10px;font-size:13px}
+
+/* layout */
+.wide-card{margin-top:20px}
+.status{font-size:13px;color:var(--muted);min-height:1.5em;margin-bottom:8px;display:flex;gap:14px;flex-wrap:wrap}
+.status .mono{color:var(--ink)}
+.rollscroll{overflow-x:auto;padding-bottom:6px;border:1px solid var(--line);border-radius:4px;background:var(--field)}
+.rollscroll svg{display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:10px}
+.sw{display:inline-block;width:14px;height:10px;vertical-align:-1px;margin-right:6px;border:1px solid var(--film-edge)}
+table.cut{width:100%;border-collapse:collapse;min-width:560px}
+.cut th{font-weight:500;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 8px 8px}
+.cut td{padding:7px 8px;border-top:1px solid var(--line);font-size:14px}
+.cut td.n{font-family:var(--mono)}
+.cut td:first-child{font-weight:600}
+.cut tr.grp td{border-top:1px solid var(--line-strong)}
+.empty{color:var(--muted);font-size:14px;padding:12px 0}
+@media (max-width:480px){
+  .wrap{padding:20px 12px 40px}.card{padding:14px}
+  .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fields.wide{grid-template-columns:minmax(0,1fr)}
+  .topbar .in{padding:12px}
+}
+
+/* ---------- print ---------- */
+#printArea{display:none}
+@page{size:A4;margin:14mm 14mm 16mm}
+@page land{size:A4 landscape;margin:10mm 12mm}
+@media print{
+  :root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--ink:#14191E;--muted:#5E656B;--line:#D9D5CC;--line-strong:#B9B3A7;--accent:#1E3A4C;--film:#E3EEF2;--film-edge:#7FA3B4;--warn:#9B4A1C;--warn-soft:#F5E3D6;--field:#FAF9F6;--surface:#FFFFFF}
+  html,body{background:#fff!important}
+  :root{padding:0}
+  .app{display:none!important}
+  #printArea{display:block;color:#14191E;font:10pt/1.45 var(--sans)}
+}
+.doc{margin:0 auto}
+.doc .lpage,.doc .lpage *{page:land}
+.doc .lpage{width:273mm}
+.doc .lpage + .lpage{break-before:page}
+.doc .ppage{page:auto;break-before:page;max-width:182mm}
+.doc .band{margin:0 0 7mm}
+.doc .band .cap{display:flex;justify-content:space-between;font-family:var(--mono);font-size:7.5pt;color:#5E656B;margin-bottom:2px}
+.doc .band svg{display:inline-block;vertical-align:top}
+.doc .bandwrap{line-height:0}
+.doc .badge{display:inline-block;font-family:var(--cond);font-weight:600;font-size:8pt;letter-spacing:.12em;text-transform:uppercase;border:1px solid #9C7429;color:#9C7429;padding:2px 7px;margin:0 0 8px}
+.doc .prelim{border-left:2px solid #9C7429;padding:6px 10px;background:#FAF6EE;color:#14191E;font-size:8.5pt;margin-top:10px}
+.orders{width:100%;border-collapse:collapse;min-width:560px}
+.orders th{font-weight:500;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:0 8px 8px}
+.orders td{padding:7px 8px;border-top:1px solid var(--line);font-size:14px;vertical-align:middle}
+.orders td.n{font-family:var(--mono);white-space:nowrap}
+.orders td.act{white-space:nowrap;text-align:right}
+.orders td.act button{padding:5px 10px;font-size:13px;margin-left:6px}
+.doc .ppage .dhead,.doc > .dhead{max-width:182mm}
+.doc .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:10px;border-bottom:2px solid #1E3A4C}
+.doc .co{font-family:var(--cond);font-weight:600;font-size:20pt;letter-spacing:.12em;text-transform:uppercase;line-height:1;color:#1E3A4C}
+.doc .co-sub{margin-top:6px;font-size:9pt;color:#5E656B}
+.doc .meta{text-align:right;font-size:9pt;color:#5E656B}
+.doc .meta b{display:block;font-family:var(--cond);font-size:11pt;letter-spacing:.1em;text-transform:uppercase;color:#14191E;font-weight:600;margin-bottom:2px}
+.doc h2{font-weight:600;font-size:15pt;margin:16px 0 4px;letter-spacing:-.01em}
+.doc .lead{color:#5E656B;margin:0 0 12px}
+.doc .facts{display:grid;grid-template-columns:auto 1fr;gap:2px 16px;font-size:9pt;margin:0 0 10px}
+.doc .facts dt{color:#5E656B}
+.doc .facts dd{margin:0}
+.doc .sec{font-family:var(--cond);font-weight:600;font-size:9pt;letter-spacing:.14em;text-transform:uppercase;color:#5E656B;margin:16px 0 6px}
+.doc table{width:100%;border-collapse:collapse}
+.doc th{font-weight:500;font-size:8pt;letter-spacing:.06em;text-transform:uppercase;color:#5E656B;text-align:left;padding:5px 6px;border-bottom:1px solid #B9B3A7}
+.doc td{padding:5px 6px;border-bottom:1px solid #E6E2DA;vertical-align:top}
+.doc td.r,.doc th.r{text-align:right}
+.doc td.m{font-family:var(--mono);font-size:9pt;white-space:nowrap}
+.doc tfoot td{border-bottom:0;font-weight:600;border-top:1px solid #B9B3A7}
+.doc .sm{font-size:8pt;color:#5E656B}
+.doc table.receipt td{padding:2px 6px;font-size:9pt;line-height:1.25}
+.doc table.receipt td.m{font-size:8.5pt}
+.doc table.totals{width:58%;margin:8px 0 0 auto}
+.doc table.totals td{padding:3px 6px;border-bottom:1px dotted #CFCAC0;font-size:9pt}
+.doc .grand{width:58%;margin-left:auto;display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;padding:8px 12px;background:#1E3A4C;color:#fff}
+.doc .grand span{font-family:var(--cond);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:10pt}
+.doc .grand b{font-family:var(--mono);font-weight:500;font-size:16pt}
+.doc .terms{font-size:8pt;color:#5E656B;margin-top:8px}
+.doc .terms p{margin:0 0 2px}
+.doc .sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:18px;font-size:9pt;color:#5E656B}
+.doc .sign div{border-top:1px solid #B9B3A7;padding-top:4px}
+.doc .vpage{break-before:page;break-inside:avoid}
+.doc .vcap{display:flex;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:7.5pt;color:#5E656B;padding-bottom:4px;margin-bottom:4px;border-bottom:1px solid #D9D5CC}
+.doc .vpage svg{display:block}
+.doc .seg{break-inside:avoid;margin:0 0 10px}
+.doc .seg .cap{font-family:var(--mono);font-size:8pt;color:#5E656B;margin-bottom:3px}
+.doc .seg svg{display:block;width:100%;height:auto}
+.doc .pb{break-before:page}
+.doc .foot{margin-top:18px;font-size:8pt;color:#9AA0A5;text-align:right}
+.avoid{break-inside:avoid}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar"><div class="in">
+    <div class="brand"><b id="brandName">ALL IN</b>Бронирование стёкол</div>
+    <div class="actions">
+      <button id="printClient">Предварительный расчёт</button>
+      <button id="printFinal" class="solid">Заказ-наряд</button>
+      <button id="printCut">Раскрой для мастера</button>
+    </div>
+  </div></div>
+
+  <div class="wrap">
+    <div class="head">
+      <h1>Расчёт стоимости и раскрой плёнки</h1>
+      <p>Внутренний расчёт: себестоимость, прибыль и раскладка стёкол на рулоне. Клиенту печатается заказ с размерами и суммами, мастеру — раскрой.</p>
+    </div>
+
+    <div class="grid">
+      <div class="stack">
+        <section class="card">
+          <h2 class="kicker">Объект</h2>
+          <div class="objs">
+            <label class="f">Название объекта<input id="objName" data-k="name" placeholder="Например, Мой дом"></label>
+            <button class="primary" id="saveObj">Сохранить</button>
+            <div class="row2">
+              <select id="objList" aria-label="Сохранённые объекты"></select>
+              <button id="loadObj">Открыть</button>
+              <button id="delObj">Удалить</button>
+            </div>
+          </div>
+          <div class="fields wide" style="margin-top:14px">
+            <label class="f">Заказчик<input data-k="client" placeholder="ФИО или организация"></label>
+            <label class="f">Адрес объекта<input data-k="address" placeholder="Город, улица, дом"></label>
+          </div>
+          <p class="note" id="objNote"></p>
+        </section>
+
+        <section class="card">
+          <h2 class="kicker">Стёкла, видимая часть, см</h2>
+          <div class="tscroll">
+            <table class="panes">
+              <thead><tr><th>Помещение</th><th>Выс.</th><th>Шир.</th><th>Шт.</th><th title="Снять штапики и завести плёнку под них">Штап.</th><th style="text-align:right">м²</th><th></th></tr></thead>
+              <tbody id="panes"></tbody>
+            </table>
+          </div>
+          <div class="btns">
+            <button class="primary" id="add">Добавить стекло</button>
+            <button id="reset">Сбросить к стандартным</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="kicker">Материал</h2>
+          <div class="objs">
+            <label class="f">Материал для этого объекта<select id="matSel"></select></label>
+            <button id="matAdd">Добавить</button>
+          </div>
+          <div class="fields" style="margin-top:14px">
+            <label class="f" style="grid-column:1/-1">Название (печатается клиенту)<input data-mk="name"></label>
+            <label class="f">Цена рулона, ₽<input data-mk="rollPrice" inputmode="decimal"></label>
+            <label class="f">Ширина рулона, м<input data-mk="rollW" inputmode="decimal"></label>
+            <label class="f">Длина рулона, м<input data-mk="rollL" inputmode="decimal"></label>
+            <label class="f">Материал клиенту, ₽/м²<input data-mk="sell" inputmode="decimal"></label>
+          </div>
+          <p class="note" id="rollNote"></p>
+          <div class="btns" style="margin-top:8px"><button id="matDel" class="x" style="padding-left:0">Удалить этот материал</button></div>
+        </section>
+
+        <section class="card">
+          <h2 class="kicker">Настройки: запас и оплата мастеру</h2>
+          <div class="fields">
+            <label class="f">Запас на сторону, см<input data-k="margin" inputmode="decimal"></label>
+            <label class="f">Мастеру за м², ₽<input data-k="labor" inputmode="decimal"></label>
+            <label class="f">Мастеру за штапики, ₽<input data-k="beadMaster" inputmode="decimal"></label>
+            <label class="f">Мастеру за дорогу, %<input data-k="masterPct" inputmode="decimal"></label>
+            <label class="f">Расходники, ₽/м²<input data-k="cons" inputmode="decimal"></label>
+          </div>
+          <p class="note">Запас добавляется к каждой стороне стекла: кусок плёнки больше стекла на два запаса по высоте и по ширине.</p>
+        </section>
+
+        <section class="card">
+          <h2 class="kicker">Цена для клиента</h2>
+          <div class="fields">
+            <label class="f">Работа, ₽/м²<input data-k="workPrice" inputmode="decimal"></label>
+            <label class="f">Мин. площадь стекла, м²<input data-k="minArea" inputmode="decimal"></label>
+            <label class="f">Мин. заказ, ₽<input data-k="minOrder" inputmode="decimal"></label>
+            <label class="f">Штапики, ₽/створка<input data-k="beadClient" inputmode="decimal"></label>
+            <label class="f">Доп. работы, ₽<input data-k="extra" inputmode="decimal"></label>
+            <label class="f">Округление итога<select data-s="roundMode"><option value="none">Не округлять</option><option value="down">Вниз, в пользу клиента</option><option value="nearest">До ближайшего</option></select></label>
+            <label class="f">Шаг округления<select data-s="roundStep"><option value="10">10 ₽</option><option value="50">50 ₽</option><option value="100">100 ₽</option></select></label>
+          </div>
+          <p class="note">Клиенту цена складывается из работы и материала (цена материала задаётся в блоке «Материал»). Стекло меньше минимальной площади считается как минимальная площадь — и для клиента, и для оплаты мастеру.</p>
+        </section>
+
+        <section class="card">
+          <h2 class="kicker">Выезд</h2>
+          <div class="zones" role="radiogroup" aria-label="Зона выезда">
+            <label><input type="radio" name="zone" value="city"> Город</label>
+            <label><input type="radio" name="zone" value="suburb"> Пригород до 30 км</label>
+            <label><input type="radio" name="zone" value="region"> Область, по км</label>
+          </div>
+          <div class="fields" style="margin-top:14px">
+            <label class="f">Бесплатно по городу от, ₽<input data-k="freeFrom" inputmode="decimal"></label>
+            <label class="f">Выезд по городу, ₽<input data-k="cityFee" inputmode="decimal"></label>
+            <label class="f">Пригород, ₽<input data-k="suburbFee" inputmode="decimal"></label>
+            <label class="f">Область, ₽/км<input data-k="perKm" inputmode="decimal"></label>
+            <label class="f" id="kmField">В одну сторону, км<input data-k="km" inputmode="decimal"></label>
+          </div>
+        </section>
+
+        <details class="card">
+          <summary><h2 class="kicker">Реквизиты для заказа</h2></summary>
+          <div class="fields wide">
+            <label class="f">Исполнитель<input data-k="company"></label>
+            <label class="f">Телефон<input data-k="phone" placeholder="+7 ..."></label>
+            <label class="f">Сайт<input data-k="site"></label>
+            <label class="f">Цены действительны, дней<input data-k="validDays" inputmode="numeric"></label>
+          </div>
+        </details>
+      </div>
+
+      <aside class="card" id="result"></aside>
+    </div>
+
+    <section class="card wide-card">
+      <h2 class="kicker">Раскрой на рулоне</h2>
+      <div class="status" id="status"></div>
+      <div class="rollscroll" id="rollView"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--film)"></i>Стекло</span>
+        <span><i class="sw" style="background:transparent;border-style:dashed"></i>Запас на подрезку</span>
+        <span><i class="sw" style="background:var(--warn-soft);border-color:var(--warn)"></i>Шире рулона, со стыком</span>
+      </div>
+    </section>
+
+    <section class="card wide-card">
+      <h2 class="kicker">Карта резки</h2>
+      <div class="tscroll" id="cutList"></div>
+    </section>
+
+    <section class="card wide-card">
+      <h2 class="kicker">Сохранённые документы</h2>
+      <div class="tscroll" id="orders"></div>
+      <p class="note"><b>Предварительный расчёт</b> печатается до замера, <b>заказ-наряд</b> — после замера, когда цена согласована. Документ сохраняется сам при печати, со своим номером и всеми цифрами на момент печати. Его можно распечатать повторно или вернуть в расчёт. Чтобы получить файл, в окне печати выберите «Сохранить как PDF».</p>
+    </section>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
+<script>
+const KEY = 'film-calc-v2', OLDKEY = 'film-calc-v1', OBJS = 'film-calc-objects-v1';
+const HOUSE = [{n:'Гостиная',h:'140',w:'65',q:'2',bead:false},{n:'Кухня',h:'120',w:'50',q:'1',bead:false},{n:'Ванная',h:'25',w:'35',q:'1',bead:false}];
+
+const DEFAULTS = {
+  rollPrice:'18000', rollW:'1.52', rollL:'30', margin:'1', cons:'40', labor:'450', beadMaster:'200',
+  price:'1650', minArea:'0.5', minOrder:'3000', beadClient:'400', extra:'0',
+  zone:'city', freeFrom:'5000', cityFee:'800', suburbFee:'1250', perKm:'35', km:'50', masterPct:'60',
+  company:'ALL IN', phone:'', site:'allinvrn.ru', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', workPrice:'850', matId:'m1',
+  materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
+  client:'', address:'', withScheme:false,
+  name:'', panes:HOUSE
+};
+const OBJ_FIELDS = ['name','client','address','panes','matId'];
+const OWN_MAT = {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'};
+function ensureMaterials(st){
+  if (!Array.isArray(st.materials) || !st.materials.length){
+    st.materials = [{id:'m1', name: st.material || 'Бронирующая плёнка 210 мкм, прозрачная', rollPrice: st.rollPrice || '18000', rollW: st.rollW || '1.52', rollL: st.rollL || '30', sell:'800'}, clone(OWN_MAT)];
+  }
+  if (st.workPrice === undefined) st.workPrice = String(Math.max(0, num(st.price ?? 1650) - num(st.materials[0].sell)));
+  if (!st.matId || !st.materials.some(m => m.id === st.matId)) st.matId = st.materials[0].id;
+  return st;
+}
+function mat(){ return state.materials.find(m => m.id === state.matId) || state.materials[0]; }
+const num = v => { const n = parseFloat(String(v ?? '').replace(/\s/g,'').replace(',','.')); return isFinite(n) ? n : 0; };
+const fmt = (n,d=0) => n.toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtS = n => fmt(n, Math.abs(n % 1) > 1e-9 ? 1 : 0);
+const rub = n => fmt(Math.round(n)) + ' ₽';
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = id => document.getElementById(id);
+function plural(n,o,f,m){const a=Math.abs(n)%100,b=a%10;if(a>10&&a<20)return m;if(b>1&&b<5)return f;if(b===1)return o;return m;}
+
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.panes)){ const m = Object.assign(clone(DEFAULTS), {materials:undefined, workPrice:undefined}, s); return ensureMaterials(m); } }catch(e){}
+  try{ const o = JSON.parse(localStorage.getItem(OLDKEY)); if (o){ delete o.panes; return ensureMaterials(Object.assign(clone(DEFAULTS), {materials:undefined, workPrice:undefined}, o, {name:'', panes:clone(HOUSE)})); } }catch(e){}
+  return ensureMaterials(clone(DEFAULTS));
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function loadObjs(){ try{ return JSON.parse(localStorage.getItem(OBJS)) || null; }catch(e){ return null; } }
+function saveObjs(o){ try{ localStorage.setItem(OBJS, JSON.stringify(o)); }catch(e){} }
+let state = load();
+
+/* ---------- inputs ---------- */
+document.querySelectorAll('input[data-k]').forEach(inp => inp.addEventListener('input', () => {
+  state[inp.dataset.k] = inp.value; save();
+  if (inp.dataset.k === 'company') $('brandName').textContent = state.company || 'ALL IN';
+  schedule();
+}));
+document.querySelectorAll('input[name="zone"]').forEach(rb => rb.addEventListener('change', () => { state.zone = rb.value; save(); schedule(true); }));
+function syncInputs(){
+  document.querySelectorAll('select[data-s]').forEach(el => el.value = state[el.dataset.s] ?? DEFAULTS[el.dataset.s]);
+  document.querySelectorAll('input[data-k]').forEach(inp => inp.value = state[inp.dataset.k] ?? '');
+  document.querySelectorAll('input[name="zone"]').forEach(rb => rb.checked = rb.value === state.zone);
+  $('brandName').textContent = state.company || 'ALL IN';
+}
+
+function renderPanes(){
+  const tb = $('panes');
+  tb.innerHTML = state.panes.map((p,i) => `<tr>
+      <td class="nm"><input data-i="${i}" data-f="n" aria-label="Помещение" value="${esc(p.n)}"></td>
+      <td><input inputmode="decimal" data-i="${i}" data-f="h" aria-label="Высота, см" value="${esc(p.h)}"></td>
+      <td><input inputmode="decimal" data-i="${i}" data-f="w" aria-label="Ширина, см" value="${esc(p.w)}"></td>
+      <td><input inputmode="numeric" data-i="${i}" data-f="q" aria-label="Количество" value="${esc(p.q)}"></td>
+      <td class="c"><input type="checkbox" data-bead="${i}" aria-label="Снимать штапики" ${p.bead?'checked':''}></td>
+      <td class="area" id="a${i}"></td>
+      <td><button class="x" data-del="${i}" aria-label="Удалить строку">✕</button></td></tr>`).join('');
+  tb.querySelectorAll('input[data-f]').forEach(inp => inp.addEventListener('input', () => {
+    state.panes[+inp.dataset.i][inp.dataset.f] = inp.value; save(); schedule(inp.dataset.f === 'n');
+  }));
+  tb.querySelectorAll('[data-bead]').forEach(c => c.addEventListener('change', () => { state.panes[+c.dataset.bead].bead = c.checked; save(); schedule(true); }));
+  tb.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { state.panes.splice(+b.dataset.del,1); save(); renderPanes(); schedule(); }));
+}
+function renderMat(){
+  const sel = $('matSel');
+  sel.innerHTML = state.materials.map(m => `<option value="${esc(m.id)}">${esc(m.name || 'Без названия')}</option>`).join('');
+  sel.value = mat().id;
+  document.querySelectorAll('input[data-mk]').forEach(inp => inp.value = mat()[inp.dataset.mk] ?? '');
+  $('matDel').style.display = state.materials.length > 1 ? '' : 'none';
+}
+$('matSel').addEventListener('change', e => { state.matId = e.target.value; save(); renderMat(); schedule(); });
+document.querySelectorAll('input[data-mk]').forEach(inp => inp.addEventListener('input', () => {
+  mat()[inp.dataset.mk] = inp.value; save();
+  if (inp.dataset.mk === 'name'){ const o = $('matSel').selectedOptions[0]; if (o) o.textContent = inp.value || 'Без названия'; }
+  schedule();
+}));
+$('matAdd').addEventListener('click', () => {
+  const m = Object.assign(clone(mat()), {id:'m' + Date.now(), name:'Новый материал'});
+  if (mat().id === 'own') Object.assign(m, {rollPrice:'18000', sell:'800'});
+  state.materials.push(m); state.matId = m.id; save(); renderMat(); schedule();
+  document.querySelector('input[data-mk="name"]').select();
+});
+$('matDel').addEventListener('click', () => {
+  if (state.materials.length <= 1 || !confirm(`Удалить материал «${mat().name}»?`)) return;
+  state.materials = state.materials.filter(m => m.id !== state.matId); state.matId = state.materials[0].id; save(); renderMat(); schedule();
+});
+document.querySelectorAll('select[data-s]').forEach(el => el.addEventListener('change', () => { state[el.dataset.s] = el.value; save(); schedule(); }));
+$('add').addEventListener('click', () => {
+  state.panes.push({n:'',h:'',w:'',q:'1',bead:false}); save(); renderPanes(); schedule();
+  const ins = document.querySelectorAll('#panes input[data-f="n"]'); ins[ins.length-1]?.focus();
+});
+$('reset').addEventListener('click', () => {
+  if (!confirm('Вернуть стандартные цены и пример списка стёкол? Реквизиты сохранятся.')) return;
+  const keep = {company:state.company, phone:state.phone, site:state.site, validDays:state.validDays, materials:clone(state.materials)};
+  state = ensureMaterials(Object.assign(clone(DEFAULTS), keep)); save(); syncInputs(); renderMat(); renderPanes(); schedule();
+});
+
+/* objects */
+function renderObjList(sel){
+  const objs = loadObjs() || {}, el = $('objList'), names = Object.keys(objs).sort((a,b)=>a.localeCompare(b,'ru'));
+  el.innerHTML = names.length ? names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('') : '<option value="">Сохранённых объектов нет</option>';
+  if (sel && objs[sel]) el.value = sel;
+}
+function objNote(t){ $('objNote').textContent = t; }
+$('saveObj').addEventListener('click', () => {
+  const name = (state.name || '').trim();
+  if (!name){ $('objName').focus(); objNote('Введите название, чтобы сохранить.'); return; }
+  const objs = loadObjs() || {}, o = {}; OBJ_FIELDS.forEach(k => o[k] = clone(state[k] ?? '')); objs[name] = o;
+  saveObjs(objs); renderObjList(name); objNote(`Сохранено: ${name}`);
+});
+$('loadObj').addEventListener('click', () => {
+  const name = $('objList').value, objs = loadObjs() || {};
+  if (!name || !objs[name]) return;
+  OBJ_FIELDS.forEach(k => { if (objs[name][k] !== undefined) state[k] = clone(objs[name][k]); });
+  state.name = name; ensureMaterials(state); save(); syncInputs(); renderMat(); renderPanes(); schedule(); objNote(`Открыт: ${name}`);
+});
+$('delObj').addEventListener('click', () => {
+  const name = $('objList').value, objs = loadObjs() || {};
+  if (!name || !objs[name] || !confirm(`Удалить «${name}»?`)) return;
+  delete objs[name]; saveObjs(objs); renderObjList(); objNote(`Удалён: ${name}`);
+});
+
+
+/* ---------- nesting ----------
+   Units: cm. x = across the roll (0..W), y = along the roll.
+   MaxRects placement with three scoring rules + simulated annealing over
+   placement order, forced orientations and rule choice. */
+function expand(W, m){
+  const items = []; let seams = 0, idx = 0;
+  state.panes.forEach(p => {
+    const w = num(p.w), h = num(p.h), q = Math.max(0, Math.round(num(p.q)));
+    if (w <= 0 || h <= 0 || q <= 0) return;
+    const name = (p.n || '').trim() || 'Стекло';
+    for (let k = 0; k < q; k++){
+      const label = q > 1 ? `${name} ${k+1}` : name;
+      const a = w + 2*m, b = h + 2*m, size = `${fmtS(h)}×${fmtS(w)}`;
+      if (Math.min(a,b) <= W + 1e-9){ items.push({id:idx++, label, size, across:a, along:b, rot:true, m}); continue; }
+      const n1 = Math.ceil(a / W), n2 = Math.ceil(b / W);
+      let n, across, along;
+      if (n1 * b <= n2 * a){ n = n1; across = a/n1; along = b; } else { n = n2; across = b/n2; along = a; }
+      seams += n - 1;
+      for (let s = 0; s < n; s++) items.push({id:idx++, label:`${label} (часть ${s+1}/${n})`, size, across, along, rot:false, seam:true, m});
+    }
+  });
+  return {items, seams};
+}
+
+function place(items, order, orient, rule, W){
+  const E = 1e-7; let free = [{x:0, y:0, w:W, h:1e7}], placed = new Array(order.length), top = 0, compact = 0;
+  for (let oi = 0; oi < order.length; oi++){
+    const it = items[order[oi]], o = orient[order[oi]];
+    let opts = [];
+    if (o !== 2 || !it.rot) opts.push([it.across, it.along, false]);
+    if (it.rot && o !== 1 && Math.abs(it.across - it.along) > E) opts.push([it.along, it.across, true]);
+    let best = null;
+    for (let pass = 0; pass < 2 && !best; pass++){
+      for (const f of free){
+        for (const [w,h,r] of opts){
+          if (w > f.w + E || h > f.h + E) continue;
+          const end = f.y + h; let s1 = Math.max(end, top), s2, s3;
+          if (rule === 3){ s1 = end; s2 = f.x; s3 = 0; }
+          else if (rule === 4){ s1 = f.y; s2 = f.x; s3 = 0; }
+          else if (rule === 0){ s2 = end; s3 = f.x; }
+          else if (rule === 1){ s2 = f.y; s3 = f.x; }
+          else { s2 = f.w - w; s3 = end; }
+          if (!best || s1 < best.s1 - E || (Math.abs(s1-best.s1) <= E && (s2 < best.s2 - E || (Math.abs(s2-best.s2) <= E && s3 < best.s3 - E))))
+            best = {x:f.x, y:f.y, w, h, r, s1, s2, s3};
+        }
+      }
+      if (!best && it.rot){ opts = [[it.across, it.along, false],[it.along, it.across, true]]; }
+    }
+    if (!best) return null;
+    placed[oi] = {it, x:best.x, y:best.y, pw:best.w, ph:best.h, rotated:best.r};
+    top = Math.max(top, best.y + best.h); compact += best.y + best.h;
+    const R = best, nf = [];
+    for (const f of free){
+      if (R.x >= f.x + f.w - E || R.x + R.w <= f.x + E || R.y >= f.y + f.h - E || R.y + R.h <= f.y + E){ nf.push(f); continue; }
+      if (R.x > f.x + E) nf.push({x:f.x, y:f.y, w:R.x - f.x, h:f.h});
+      if (R.x + R.w < f.x + f.w - E) nf.push({x:R.x + R.w, y:f.y, w:f.x + f.w - R.x - R.w, h:f.h});
+      if (R.y > f.y + E) nf.push({x:f.x, y:f.y, w:f.w, h:R.y - f.y});
+      if (R.y + R.h < f.y + f.h - E) nf.push({x:f.x, y:R.y + R.h, w:f.w, h:f.y + f.h - R.y - R.h});
+    }
+    free = [];
+    for (let i = 0; i < nf.length; i++){
+      const a = nf[i]; let dead = false;
+      for (let j = 0; j < nf.length && !dead; j++){
+        if (i === j) continue; const b = nf[j];
+        if (a.x >= b.x - E && a.y >= b.y - E && a.x + a.w <= b.x + b.w + E && a.y + a.h <= b.y + b.h + E){
+          const same = Math.abs(a.x-b.x)<E && Math.abs(a.y-b.y)<E && Math.abs(a.w-b.w)<E && Math.abs(a.h-b.h)<E;
+          dead = !same || j < i;
+        }
+      }
+      if (!dead) free.push(a);
+    }
+  }
+  return {placed, total: top, score: top + compact / (order.length * 1000)};
+}
+
+let runId = 0;
+const NRULES = 5;
+// Multi-start simulated annealing: several independent runs, the best layout wins.
+function optimizeAsync(items, W, onDone){
+  const my = ++runId, n = items.length;
+  if (!n){ onDone({placed:[], total:0}); return; }
+  const keys = [it => it.across*it.along, it => Math.max(it.across,it.along), it => it.along, it => it.across, it => it.across+it.along, it => Math.min(it.across,it.along)];
+  let best = null;
+  const evalS = st => { const r = place(items, st.order, st.orient, st.rule, W); if (r) r.st = st; return r; };
+  const consider = r => { if (r && (!best || r.score < best.score - 1e-9)){ best = r; return true; } return false; };
+  let seedStart = null;
+  for (const k of keys) for (let rule = 0; rule < NRULES; rule++){
+    const order = items.map((_,i) => i).sort((a,b) => k(items[b]) - k(items[a]));
+    consider(evalS({order, orient:new Array(n).fill(0), rule}));
+  }
+  seedStart = best;
+  let seed = 7;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const RUNS = n <= 8 ? 2 : 6, PER = n <= 8 ? 1500 : n <= 40 ? 6000 : 3000, budget = 9000, t0 = performance.now();
+  const T0 = 12;
+  let run = 0, it = 0, since = 0, cur = seedStart;
+  function mutate(st){
+    const s = {order: st.order.slice(), orient: st.orient.slice(), rule: st.rule}, r = rnd();
+    if (r < 0.35 && n > 1){ const i = Math.floor(rnd()*n), j = Math.floor(rnd()*n); [s.order[i], s.order[j]] = [s.order[j], s.order[i]]; }
+    else if (r < 0.65 && n > 1){ const i = Math.floor(rnd()*n), j = Math.floor(rnd()*n), v = s.order.splice(i,1)[0]; s.order.splice(j,0,v); }
+    else if (r < 0.92){ const i = Math.floor(rnd()*n); s.orient[i] = (s.orient[i] + 1 + Math.floor(rnd()*2)) % 3; }
+    else s.rule = Math.floor(rnd()*NRULES);
+    return s;
+  }
+  function finish(){
+    const placed = best.placed.map(p => ({...p.it, x:p.x, y:p.y, pw:p.pw, ph:p.ph, rotated:p.rotated}));
+    placed.sort((a,b) => a.y - b.y || a.x - b.x).forEach((p,i) => p.no = i + 1);
+    onDone({placed, total: best.total});
+  }
+  function slice(){
+    if (my !== runId) return;
+    const sEnd = performance.now() + 35;
+    while (performance.now() < sEnd){
+      if (performance.now() - t0 > budget || run >= RUNS){ finish(); return; }
+      if (it >= PER){ run++; it = 0; since = 0; cur = best; continue; }
+      const T = T0 * Math.pow(0.02, it / PER);
+      const cand = evalS(mutate(cur.st)); it++; since++;
+      if (!cand) continue;
+      const d = cand.score - cur.score;
+      if (d <= 0 || rnd() < Math.exp(-d / Math.max(T, 0.05))) cur = cand;
+      if (consider(cand)) since = 0;
+      if (since > 3000){ cur = best; since = 0; }
+    }
+    $('status').innerHTML = `<span>Подбираю раскладку… вариант ${Math.min(run+1,RUNS)} из ${RUNS} · лучший <span class="mono">${fmt(best.total/100,2)} м</span></span>`;
+    setTimeout(slice, 0);
+  }
+  setTimeout(slice, 0);
+}
+
+/* ---------- compute ---------- */
+let timer = null, lastLayout = null, lastKey = '', pendingKey = '';
+function schedule(soft){ clearTimeout(timer); timer = setTimeout(() => compute(soft), 220); }
+
+function figures(){
+  const M = mat(), rollPrice = num(M.rollPrice), Wm = num(M.rollW), Lm = num(M.rollL), sell = num(M.sell), workP = num(state.workPrice);
+  const m = Math.max(0, num(state.margin)), cons = num(state.cons), labor = num(state.labor);
+  const price = workP + sell, minArea = num(state.minArea), minOrder = num(state.minOrder), extra = num(state.extra);
+  const beadMaster = num(state.beadMaster), beadClient = num(state.beadClient);
+  let glass = 0, bill = 0, smallCount = 0, beads = 0, count = 0;
+  const rows = [];
+  state.panes.forEach((p,i) => {
+    const w = num(p.w), h = num(p.h), q = Math.max(0, Math.round(num(p.q))), a = w*h/1e4;
+    if (a > 0 && q > 0){
+      glass += a*q; bill += Math.max(a, minArea)*q; count += q; if (a < minArea) smallCount += q; if (p.bead) beads += q;
+      rows.push({i, n:(p.n||'').trim() || 'Стекло', h, w, q, a, bead:!!p.bead});
+    }
+  });
+  const beadRev = beads * beadClient, areaRev = bill * price, workRev = bill * workP, matRev = bill * sell;
+  const raw = areaRev + beadRev + extra, work = Math.max(raw, minOrder), topUp = work - raw;
+  const zone = state.zone || 'city';
+  let travel = 0, travelNote = '';
+  if (zone === 'city'){ const ff = num(state.freeFrom); travel = work >= ff ? 0 : num(state.cityFee); travelNote = travel ? `заказ меньше ${rub(ff)}` : 'бесплатно'; }
+  else if (zone === 'suburb'){ travel = num(state.suburbFee); travelNote = 'пригород'; }
+  else { const km = num(state.km); travel = km * 2 * num(state.perKm); travelNote = `${fmt(km)} км × 2 × ${fmt(num(state.perKm))} ₽`; }
+  const masterTravel = zone === 'city' ? 0 : travel * num(state.masterPct) / 100;
+  return {M, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient,
+    glass, bill, smallCount, beads, count, rows, beadRev, areaRev, raw, work, topUp, zone, travel, travelNote, masterTravel,
+    exact: work + travel, ...rounding(work + travel)};
+}
+function rounding(v){
+  const step = num(state.roundStep) || 100, mode = state.roundMode || 'none';
+  let r = v;
+  if (mode === 'down') r = Math.floor((v + 1e-6) / step) * step;
+  else if (mode === 'nearest') r = Math.round(v / step) * step;
+  else r = Math.round(v);
+  return {revenue: r, roundDiff: r - v};
+}
+
+function compute(soft){
+  const F = figures();
+  state.panes.forEach((p,i) => { const c = $('a'+i); if (c){ const a = num(p.w)*num(p.h)/1e4, q = Math.round(num(p.q)); c.textContent = a > 0 && q > 0 ? fmt(a*q,2) : '—'; } });
+  $('kmField').style.display = state.zone === 'region' ? '' : 'none';
+  const rollArea = F.Wm * F.Lm, priceM2 = rollArea > 0 ? F.rollPrice / rollArea : 0;
+  $('rollNote').innerHTML = rollArea > 0 ? `В рулоне <b>${fmt(rollArea,1)} м²</b>: <b>${fmt(priceM2)} ₽/м²</b>, <b>${fmt(F.rollPrice / F.Lm)} ₽</b> за погонный метр.` : 'Укажите ширину и длину рулона.';
+  const Wcm = F.Wm * 100;
+  if (F.glass <= 0 || Wcm <= 0){
+    $('result').innerHTML = '<h2 class="kicker">Итог</h2><p class="empty">Добавьте хотя бы одно стекло с размерами.</p>';
+    $('rollView').innerHTML = '<p class="empty" style="padding:14px">Здесь появится раскладка стёкол на рулоне.</p>';
+    $('cutList').innerHTML = ''; $('status').textContent = ''; lastLayout = null; lastKey = ''; pendingKey = ''; runId++; return;
+  }
+  const {items, seams} = expand(Wcm, F.m);
+  const key = JSON.stringify([Wcm, F.m, items.map(i => [i.across, i.along, i.rot])]);
+  if (lastLayout && key === lastKey){
+    // geometry unchanged (prices, names, zone): reuse layout, refresh labels
+    lastLayout.placed.forEach(p => { const src = items[p.id]; if (src) p.label = src.label; });
+    render(F, lastLayout, seams, Wcm); return;
+  }
+  if (key === pendingKey){ renderSummary(F, null, seams, Wcm); return; }   // already optimizing this geometry
+  pendingKey = key; lastLayout = null;
+  renderSummary(F, null, seams, Wcm);
+  $('status').innerHTML = '<span>Подбираю раскладку…</span>';
+  optimizeAsync(items, Wcm, res => {
+    lastLayout = res; lastKey = key; pendingKey = '';
+    const F2 = figures(), ex = expand(Wcm, F2.m);
+    res.placed.forEach(p => { const src = ex.items[p.id]; if (src) p.label = src.label; });
+    render(F2, res, seams, Wcm);
+  });
+}
+
+function render(F, L, seams, Wcm){
+  renderSummary(F, L, seams, Wcm);
+  const lenM = L.total / 100;
+  const lower = L.placed.reduce((s,p) => s + p.pw * p.ph, 0) / Wcm / 100;
+  $('status').innerHTML = `<span>Расход: <span class="mono">${fmt(lenM,2)} м</span></span><span>Теоретический минимум: <span class="mono">${fmt(lower,2)} м</span></span><span>${L.placed.length} ${plural(L.placed.length,'кусок','куска','кусков')}</span>`;
+  $('rollView').innerHTML = rollSVG(L, Wcm, 0, L.total, 2.6, true);
+  $('cutList').innerHTML = cutTable(L);
+}
+
+function renderSummary(F, L, seams, Wcm){
+  const lenM = L ? L.total / 100 : 0, filmArea = lenM * F.Wm;
+  const filmCost = L ? lenM * (F.Lm > 0 ? F.rollPrice / F.Lm : 0) : 0;
+  const consCost = F.glass * F.cons, laborArea = F.bill * F.labor, laborBead = F.beads * F.beadMaster, laborCost = laborArea + laborBead;
+  const cost = filmCost + consCost + laborCost + F.masterTravel;
+  const profit = F.revenue - cost, marginPct = F.revenue > 0 ? profit / F.revenue : 0;
+  const waste = filmArea > 0 ? Math.max(0, 1 - F.glass / filmArea) : 0;
+  const warns = [];
+  if (L && lenM > F.Lm) warns.push(`Не хватит одного рулона: нужно ${fmt(lenM,2)} м, в рулоне ${fmt(F.Lm)} м.`);
+  if (seams) warns.push(`Есть стёкла шире рулона, стыков: ${seams}.`);
+  if (F.smallCount) warns.push(`Мелких стёкол: ${F.smallCount} шт., посчитаны как ${fmt(F.minArea,2)} м² каждое.`);
+  if (F.topUp > 0) warns.push(`Сумма по площади меньше минимального заказа, цена поднята до ${rub(F.minOrder)}.`);
+  if (L && profit < 0) warns.push('Заказ убыточный: цена ниже себестоимости.');
+  const pend = v => L ? v : '…';
+  $('result').innerHTML = `
+    <h2 class="kicker">Итог${state.name ? ' · ' + esc(state.name) : ''}</h2>
+    <div class="total-label">Цена клиенту</div>
+    <div class="total">${rub(F.revenue)}</div>
+    <p class="sub">${fmt(F.glass,2)} м² стекла · к оплате ${fmt(F.bill,2)} м² × (работа ${fmt(F.workP)} + материал ${fmt(F.sell)}) ₽${F.beads ? ` · штапики ${F.beads} шт.` : ''}${F.travel ? ` · выезд ${rub(F.travel)}` : ''}</p>
+    <div class="kpis">
+      <div class="kpi"><span>Прибыль</span><strong class="${profit>=0?'pos':'neg'}">${pend(rub(profit))}</strong></div>
+      <div class="kpi"><span>Маржа</span><strong class="${profit>=0?'pos':'neg'}">${pend(fmt(marginPct*100) + '%')}</strong></div>
+      <div class="kpi"><span>Себестоимость</span><strong>${pend(rub(cost))}</strong></div>
+      <div class="kpi"><span>Себест. за м² стекла</span><strong>${pend(rub(cost / F.glass))}</strong></div>
+    </div>
+    <div class="rows">
+      <div><span>Материал</span><span>${esc(F.M.name)}</span></div>
+      <div><span>Расход плёнки</span><span>${pend(`${fmt(lenM,2)} м · ${fmt(filmArea,2)} м²`)}</span></div>
+      <div><span>Отход с запасом</span><span>${pend(fmt(waste*100) + '%')}</span></div>
+      <div><span>Плёнка</span><span>${pend(rub(filmCost))}</span></div>
+      <div><span>Расходники</span><span>${rub(consCost)}</span></div>
+      <div><span>Мастеру</span><span>${rub(laborCost + F.masterTravel)}</span></div>
+      <div class="ind"><span>оклейка</span><span>${fmt(F.bill,2)} × ${fmt(F.labor)} = ${rub(laborArea)}</span></div>
+      ${F.beads ? `<div class="ind"><span>штапики</span><span>${F.beads} × ${fmt(F.beadMaster)} = ${rub(laborBead)}</span></div>` : ''}
+      ${F.masterTravel ? `<div class="ind"><span>дорога</span><span>${rub(F.masterTravel)}</span></div>` : ''}
+      ${Math.abs(F.roundDiff) >= 0.5 ? `<div><span>Округление</span><span>${F.roundDiff > 0 ? '+' : '−'}${rub(Math.abs(F.roundDiff))}</span></div>` : ''}
+      <div><span>Выезд клиенту</span><span>${F.travel ? rub(F.travel) : '0 ₽'} · ${F.travelNote}</span></div>
+      <div><span>Наценка</span><span>${pend('×' + fmt(F.revenue / Math.max(cost,1),1))}</span></div>
+      <div><span>Остаток рулона</span><span>${pend(lenM <= F.Lm ? fmt(F.Lm - lenM,2) + ' м' : '—')}</span></div>
+    </div>
+    ${warns.length ? `<div class="warns">${warns.map(w => `<div class="warn">${esc(w)}</div>`).join('')}</div>` : ''}`;
+}
+
+/* ---------- drawing ---------- */
+function label(p, x, y, w, h, sc, ff){
+  const wPx = w * sc, hPx = h * sc, padPx = 5;
+  const vertical = hPx > wPx * 1.15;
+  const lenPx = (vertical ? hPx : wPx) - padPx * 2, thickPx = (vertical ? wPx : hPx) - padPx * 2;
+  const l1 = `${p.no}. ${p.label}`, l2 = p.size;
+  let lines = [l1, l2];
+  let fsPx = Math.min(13, lenPx / (Math.max(l1.length, l2.length) * 0.58), thickPx / 2.5);
+  if (fsPx < 8){
+    lines = [`${p.no}.`, p.label, l2];
+    fsPx = Math.min(13, lenPx / (Math.max(p.label.length, l2.length) * 0.58), thickPx / 3.7);
+  }
+  fsPx = Math.max(fsPx, 6);
+  const fs = fsPx / sc, cx = x + w/2, cy = y + h/2, lh = fs * 1.22;
+  const rot = vertical ? ` transform="rotate(-90 ${cx} ${cy})"` : '';
+  const y0 = cy - (lines.length - 1) * lh / 2;
+  let t = `<g${rot}>`;
+  lines.forEach((ln, i) => {
+    const last = i === lines.length - 1;
+    t += `<text x="${cx}" y="${y0 + i*lh}" dy="0.35em" font-size="${last ? fs*0.88 : fs}" font-weight="${last ? 400 : 600}" text-anchor="middle" fill="${last ? 'var(--muted)' : 'var(--ink)'}" ${last ? 'font-family="IBM Plex Mono, ui-monospace, monospace"' : ff}>${esc(ln)}</text>`;
+  });
+  return t + '</g>';
+}
+// Horizontal roll from "from" to "to" (cm along). sc = px per cm.
+function rollSVG(L, Wcm, from, to, sc, screen, ids){
+  const len = Math.max(to - from, 1), pad = 3 / sc, ruler = 14 / sc;
+  const ff = 'font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif"';
+  let g = `<rect x="${from}" y="0" width="${len}" height="${Wcm}" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="${1/sc}"/>`;
+  for (let x = Math.ceil(from/50)*50; x <= to; x += 50){
+    const major = x % 100 === 0;
+    g += `<line x1="${x}" y1="${Wcm}" x2="${x}" y2="${Wcm + (major ? 5 : 3)/sc}" stroke="var(--muted)" stroke-width="${1/sc}"/>`;
+    if (major && x > from) g += `<line x1="${x}" y1="0" x2="${x}" y2="${Wcm}" stroke="var(--line)" stroke-width="${1/sc}" stroke-dasharray="${2/sc} ${3/sc}"/>`;
+    if (major) g += `<text x="${x}" y="${Wcm + 12/sc}" font-size="${9/sc}" text-anchor="${x === from ? 'start' : 'middle'}" fill="var(--muted)" font-family="IBM Plex Mono, ui-monospace, monospace">${fmt(x/100)} м</text>`;
+  }
+  g += '<g>';
+  L.placed.forEach(p => {
+    if (ids ? !ids.includes(p.no) : (p.y + p.ph < from - 0.01 || p.y > to + 0.01)) return;
+    const x = p.y, y = p.x, w = p.ph, h = p.pw;
+    if (p.seam) g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="${1/sc}"/>`;
+    else {
+      g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="var(--film-edge)" stroke-dasharray="${3/sc} ${2/sc}" stroke-width="${0.8/sc}"/>`;
+      g += `<rect x="${x+p.m}" y="${y+p.m}" width="${Math.max(0,w-2*p.m)}" height="${Math.max(0,h-2*p.m)}" fill="var(--film)" stroke="var(--film-edge)" stroke-width="${1/sc}"/>`;
+    }
+    g += label(p, x, y, w, h, sc, ff);
+  });
+  g += '</g>';
+  const vw = len + pad*2, vh = Wcm + pad + ruler + pad;
+  return `<svg ${screen ? `width="${vw*sc}" height="${vh*sc}"` : ''} viewBox="${from - pad} ${-pad} ${vw} ${vh}" role="img" aria-label="Раскладка стёкол на рулоне">${g}</svg>`;
+}
+function cutTable(L){
+  return `<table class="cut"><thead><tr><th>№</th><th>Помещение</th><th>Стекло, в×ш</th><th>Кусок, см<br>поперёк × вдоль</th><th>От края</th><th>От начала</th></tr></thead><tbody>
+    ${L.placed.map((p,i) => { const g = i > 0 && Math.abs(L.placed[i-1].y - p.y) > 0.01;
+      return `<tr${g ? ' class="grp"' : ''}><td class="n">${p.no}</td><td>${esc(p.label)}</td><td class="n">${p.size}</td><td class="n">${fmt(p.pw,1)} × ${fmt(p.ph,1)}</td><td class="n">${fmt(p.x,1)}</td><td class="n">${fmt(p.y,1)}</td></tr>`; }).join('')}
+  </tbody></table>`;
+}
+// Split the roll into printable strips. Prefer breaks no piece crosses; otherwise each
+// piece goes to the strip where it starts and the strip is extended to show it whole.
+function segments(L, maxLen, ext = 1.15){
+  const pts = [...new Set(L.placed.flatMap(p => [p.y, p.y + p.ph]).map(v => +v.toFixed(2)))].sort((a,b) => a-b);
+  const crosses = c => L.placed.some(p => p.y < c - 0.05 && p.y + p.ph > c + 0.05);
+  const out = []; let s = 0;
+  while (s < L.total - 0.05){
+    let e;
+    if (L.total - s <= maxLen * ext) e = L.total;
+    else {
+      let c = null;
+      for (const v of pts) if (v > s + maxLen * 0.55 && v <= s + maxLen * ext && !crosses(v)) c = v;
+      e = c ?? s + maxLen;
+    }
+    const ids = L.placed.filter(p => p.y >= s - 0.05 && p.y < e - 0.05).map(p => p.no);
+    const to = Math.max(e, ...L.placed.filter(p => ids.includes(p.no)).map(p => p.y + p.ph));
+    out.push({from:s, to, ids}); s = e;
+  }
+  return out;
+}
+
+/* ---------- printing ---------- */
+function makeNo(d){ return `${String(d.getDate()).padStart(2,'0')}${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`; }
+function docHead(title, fixed){
+  const d = fixed ? new Date(fixed.date) : new Date(), date = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'long', year:'numeric'});
+  const no = fixed ? fixed.no : makeNo(d);
+  const contacts = [state.phone, state.site].filter(Boolean).map(esc).join(' · ');
+  return `<div class="dhead"><div><div class="co">${esc(state.company || 'ALL IN')}</div><div class="co-sub">${contacts || 'Бронирование стёкол'}</div></div>
+    <div class="meta"><b>${title} № ${no}</b>${date}</div></div>`;
+}
+// Print scheme: the roll runs top-to-bottom, its width spans the page width,
+// one full A4 page per strip — the sheet is used as fully as possible.
+const PAGE_W = 182, PAGE_H = 248, RULER = 11;      // mm
+function rollSVGv(L, Wcm, g, mm, pageNo){
+  const pad = 1.5 / mm, rw = RULER / mm, sc = mm * 3.78;           // sc: px per cm for label sizing
+  const ff = 'font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif"', mf = 'font-family="IBM Plex Mono, ui-monospace, monospace"';
+  const from = g.from, to = g.to, len = to - from, clip = `vp${pageNo}`;
+  let o = `<defs><clipPath id="${clip}"><rect x="0" y="${from}" width="${Wcm}" height="${len}"/></clipPath></defs>`;
+  o += `<rect x="0" y="${from}" width="${Wcm}" height="${len}" fill="#fff" stroke="var(--line-strong)" stroke-width="${0.6/sc}"/>`;
+  for (let y = Math.ceil(from/10)*10; y <= to + 0.01; y += 10){
+    const k = y % 100 === 0 ? 3.2 : y % 50 === 0 ? 2.2 : 1.1;
+    o += `<line x1="${-k/mm}" y1="${y}" x2="0" y2="${y}" stroke="var(--muted)" stroke-width="${0.5/sc}"/>`;
+    if (y % 50 === 0) o += `<text x="${-3.8/mm}" y="${y}" dy="0.35em" font-size="${7/sc}" text-anchor="end" fill="var(--muted)" ${mf}>${fmt(y/100, y % 100 ? 1 : 0)}</text>`;
+    if (y % 100 === 0 && y > from + 0.5 && y < to - 0.5) o += `<line x1="0" y1="${y}" x2="${Wcm}" y2="${y}" stroke="var(--line)" stroke-width="${0.6/sc}" stroke-dasharray="${2/sc} ${3/sc}"/>`;
+  }
+  o += `<g clip-path="url(#${clip})">`;
+  let labels = '';
+  L.placed.forEach(p => {
+    if (p.y + p.ph <= from + 0.01 || p.y >= to - 0.01) return;
+    const x = p.x, y = p.y, w = p.pw, h = p.ph;
+    if (p.seam) o += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="${0.8/sc}"/>`;
+    else {
+      o += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="var(--film-edge)" stroke-dasharray="${3/sc} ${2/sc}" stroke-width="${0.6/sc}"/>`;
+      o += `<rect x="${x+p.m}" y="${y+p.m}" width="${Math.max(0,w-2*p.m)}" height="${Math.max(0,h-2*p.m)}" fill="var(--film)" stroke="var(--film-edge)" stroke-width="${0.8/sc}"/>`;
+    }
+    // label inside the visible part; mark pieces continuing on another sheet
+    const vy0 = Math.max(y, from), vy1 = Math.min(y + h, to);
+    const cutTop = y < from - 0.01, cutBot = y + h > to + 0.01;
+    const q = cutTop || cutBot ? {...p, size: p.size + (cutBot ? ' · ↓ на след. листе' : ' · ↑ начало выше')} : p;
+    labels += label(q, x, vy0, w, vy1 - vy0, sc, ff);
+  });
+  o += '</g>' + labels;
+  const vx = -rw, vw = Wcm + rw + pad, vy = from - pad, vh = len + pad * 2;
+  return `<svg style="width:${(vw*mm).toFixed(2)}mm;height:${(vh*mm).toFixed(2)}mm" viewBox="${vx} ${vy} ${vw} ${vh}" role="img" aria-label="Схема раскроя">${o}</svg>`;
+}
+// Pages are filled to the brim: break where no piece is cut if such a spot is near the
+// bottom of the sheet, otherwise continue the piece on the next sheet.
+function pageSegments(L, maxLen){
+  const pts = [...new Set(L.placed.flatMap(p => [p.y, p.y + p.ph]).map(v => +v.toFixed(2)))].sort((a,b) => a-b);
+  const crosses = c => L.placed.some(p => p.y < c - 0.05 && p.y + p.ph > c + 0.05);
+  const out = []; let s = 0;
+  while (s < L.total - 0.05){
+    let e;
+    if (L.total - s <= maxLen) e = L.total;
+    else {
+      let c = null;
+      for (const v of pts) if (v >= s + maxLen * 0.9 && v <= s + maxLen && !crosses(v)) c = v;
+      e = c ?? s + maxLen;
+    }
+    const ids = L.placed.filter(p => p.y < e - 0.01 && p.y + p.ph > s + 0.01).map(p => p.no).sort((a,b) => a-b);
+    out.push({from:s, to:e, ids}); s = e;
+  }
+  return out;
+}
+function schemeHTML(L, Wcm, title){
+  const mm = (PAGE_W - RULER - 2) / Wcm;
+  const segs = pageSegments(L, PAGE_H / mm - 3);
+  return segs.map((g, i) => `<div class="vpage"><div class="vcap"><span>${esc(title)} · лист ${i+1} из ${segs.length}</span><span>${fmt(g.from/100,2)}–${fmt(g.to/100,2)} м · куски ${g.ids[0]}–${g.ids[g.ids.length-1]}</span></div>${rollSVGv(L, Wcm, g, mm, i)}</div>`).join('');
+}
+
+function printClient(rec, kind){
+  kind = kind || (rec && rec.kind) || 'prelim';
+  const final = kind === 'final';
+  const F = figures();
+  let n = 0;
+  const glassRows = F.rows.map(r => {
+    const billA = Math.max(r.a, F.minArea) * r.q, sum = billA * F.price + (r.bead ? r.q * F.beadClient : 0);
+    return `<tr class="avoid"><td class="m">${++n}</td><td>${esc(r.n)}${r.bead ? '<div class="sm">под штапик +' + fmt(F.beadClient) + ' ₽' + (r.q > 1 ? ' × ' + r.q : '') + '</div>' : ''}</td>
+      <td class="r m">${fmtS(r.h)} × ${fmtS(r.w)}</td><td class="r m">${r.q}</td><td class="r m">${fmt(r.a*r.q,2)}${r.a < F.minArea ? '*' : ''}</td><td class="r m">${fmt(billA,2)}</td><td class="r m">${fmt(Math.round(sum))}</td></tr>`;
+  }).join('');
+  const linesSum = F.areaRev + F.beadRev;
+  const extra = [];
+  if (F.extra) extra.push(['Дополнительные работы', F.extra]);
+  if (F.topUp > 0) extra.push(['Доплата до минимальной стоимости заказа', F.topUp]);
+  extra.push([F.travel ? 'Выезд мастера' : 'Выезд мастера по городу', F.travel, !F.travel]);
+  const facts = [['Заказчик', state.client], ['Адрес объекта', state.address], ['Материал', F.M.name]].filter(r => (r[1]||'').trim());
+  const own = F.sell <= 0;
+  const breakdown = [[`Работа по оклейке · ${fmt(F.bill,2)} м² × ${fmt(F.workP)} ₽`, F.workRev]];
+  breakdown.push(own ? ['Материал предоставлен заказчиком', null] : [`Материал · ${fmt(F.bill,2)} м² × ${fmt(F.sell)} ₽`, F.matRev]);
+  if (F.beads) breakdown.push([`Монтаж под штапик · ${F.beads} × ${fmt(F.beadClient)} ₽`, F.beadRev]);
+  const html = `<div class="doc"><div style="max-width:182mm">${docHead(final ? 'Заказ-наряд' : 'Предварительный расчёт', rec)}
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 2px"><h2 style="margin:0">Бронирование стёкол защитной плёнкой</h2></div>
+    <p class="lead">${esc(state.name || '')}${state.name ? ' · ' : ''}${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · работа ${fmt(F.workP)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}</p>
+    ${facts.length ? `<dl class="facts">${facts.map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>` : ''}
+    <table class="receipt"><thead><tr><th>№</th><th>Помещение</th><th class="r">Размер, см<br>в × ш</th><th class="r">Кол-во</th><th class="r">Площадь, м²</th><th class="r">К оплате, м²</th><th class="r">Сумма, ₽</th></tr></thead>
+      <tbody>${glassRows}</tbody>
+      <tfoot><tr><td></td><td>Итого по стёклам</td><td></td><td class="r m">${F.count}</td><td class="r m">${fmt(F.glass,2)}</td><td class="r m">${fmt(F.bill,2)}</td><td class="r m">${fmt(Math.round(linesSum))}</td></tr></tfoot>
+    </table>
+    <div class="avoid">
+      <table class="totals">
+        ${breakdown.map(e => `<tr><td>${e[0]}</td><td class="r m">${e[1] === null ? '—' : fmt(Math.round(e[1]))}</td></tr>`).join('')}
+        ${extra.map(e => `<tr><td>${e[0]}</td><td class="r m">${e[2] ? 'бесплатно' : fmt(Math.round(e[1]))}</td></tr>`).join('')}
+      </table>
+      <div class="grand"><span>Итого к оплате</span><b>${rub(F.revenue)}</b></div>
+      ${final
+        ? '<div class="prelim">Объём и стоимость работ определены по результатам замера на объекте и согласованы с заказчиком. Заказчик с перечнем, объёмом и стоимостью работ ознакомлен и согласен.</div>'
+        : '<div class="prelim">Расчёт предварительный: составлен по размерам, предоставленным заказчиком. Окончательная стоимость уточняется после замера на объекте и может измениться, если изменятся размеры, количество стёкол или условия монтажа.</div>'}
+      <div class="terms">
+        <p>${own ? 'Материал предоставлен заказчиком. В стоимость работы входит' : 'В стоимость входит материал,'} подготовка и обезжиривание стекла, оклейка, подрезка плёнки по контуру и уборка рабочего места.</p>
+        ${F.smallCount ? `<p>* Стёкла площадью менее ${fmt(F.minArea,2)} м² учитываются как ${fmt(F.minArea,2)} м².</p>` : ''}
+        ${final ? '' : `<p>Цены действительны ${esc(state.validDays || '14')} ${plural(num(state.validDays)||14,'день','дня','дней')} с даты составления.</p>`}
+      </div>
+      <div class="sign"><div>Исполнитель</div><div>Заказчик</div></div>
+    </div>
+  </div></div>`;
+  doPrint(html, `${final ? 'Заказ-наряд' : 'Предварительный расчёт'} ${rec ? rec.no : ''} — ${state.name || 'бронирование стёкол'}`);
+}
+/* ---------- saved orders ---------- */
+const ORD = 'film-calc-orders-v1';
+const SNAP_SKIP = [];
+function loadOrders(){ try{ return JSON.parse(localStorage.getItem(ORD)) || []; }catch(e){ return []; } }
+function saveOrders(a){ try{ localStorage.setItem(ORD, JSON.stringify(a)); }catch(e){} }
+function snapshot(){ const s = clone(state); return s; }
+function newOrder(kind){
+  const F = figures(), snap = snapshot(), list = loadOrders(), sig = JSON.stringify(snap);
+  const same = list.find(o => (o.kind || 'prelim') === kind && JSON.stringify(o.snap) === sig);
+  if (same) return same;
+  const d = new Date();
+  const base = makeNo(d); let no = base, k = 1; while (list.some(o => o.no === no)) no = `${base}-${++k}`;
+  const rec = {kind, no, date: d.toISOString(), name: state.name || '', client: state.client || '', total: F.revenue, area: F.glass, snap};
+  list.unshift(rec); saveOrders(list); renderOrders(); return rec;
+}
+function withSnapshot(snap, fn){
+  const keep = state; state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined}, clone(snap)));
+  try{ fn(); } finally { state = keep; }
+}
+function renderOrders(){
+  const list = loadOrders(), el = $('orders');
+  if (!list.length){ el.innerHTML = '<p class="empty">Пока нет сохранённых документов. Нажмите «Предварительный расчёт» или «Заказ-наряд» вверху.</p>'; return; }
+  el.innerHTML = `<table class="orders"><thead><tr><th>Документ</th><th>№</th><th>Дата</th><th>Объект · заказчик</th><th>Площадь</th><th>Сумма</th><th></th></tr></thead><tbody>
+    ${list.map((o,i) => `<tr><td>${(o.kind || 'prelim') === 'final' ? '<b>Заказ-наряд</b>' : 'Предв. расчёт'}</td><td class="n">${esc(o.no)}</td><td class="n">${new Date(o.date).toLocaleDateString('ru-RU')}</td><td>${esc([o.name, o.client].filter(Boolean).join(' · ') || '—')}</td><td class="n">${fmt(o.area,2)} м²</td><td class="n">${rub(o.total)}</td>
+      <td class="act"><button data-op="print" data-i="${i}">Печать</button>${(o.kind || 'prelim') === 'prelim' ? `<button data-op="final" data-i="${i}" title="Оформить окончательный заказ-наряд по этим же цифрам">→ Заказ-наряд</button>` : ''}<button data-op="open" data-i="${i}">В расчёт</button><button data-op="del" data-i="${i}" class="x" aria-label="Удалить">✕</button></td></tr>`).join('')}
+  </tbody></table>`;
+  el.querySelectorAll('button[data-op]').forEach(b => b.addEventListener('click', () => {
+    const list = loadOrders(), o = list[+b.dataset.i]; if (!o) return;
+    if (b.dataset.op === 'print') withSnapshot(o.snap, () => printClient(o, o.kind || 'prelim'));
+    if (b.dataset.op === 'final'){ withSnapshot(o.snap, () => { const rec = newOrder('final'); printClient(rec, 'final'); }); return; }
+    if (b.dataset.op === 'open'){ if (!confirm(`Загрузить в расчёт заказ-наряд № ${o.no}? Текущие данные на экране будут заменены.`)) return;
+      state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined}, clone(o.snap))); save(); renderMat(); syncInputs(); renderPanes(); compute(); window.scrollTo({top:0, behavior:'smooth'}); }
+    if (b.dataset.op === 'del'){ if (!confirm(`Удалить заказ-наряд № ${o.no}?`)) return; list.splice(+b.dataset.i,1); saveOrders(list); renderOrders(); }
+  }));
+}
+// Horizontal band of the roll for the master's sheet (landscape A4, two bands of 7,5 m per sheet).
+const BAND = 750, BAND_MM = 268;
+function bandSVG(L, Wcm, from, to, mm, key){
+  const len = to - from, sc = mm * 3.78, pad = 1 / mm, rul = 5 / mm;
+  const ff = 'font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif"', mf = 'font-family="IBM Plex Mono, ui-monospace, monospace"';
+  const used = Math.min(to, L.total);
+  let o = `<defs><clipPath id="b${key}"><rect x="${from}" y="0" width="${len}" height="${Wcm}"/></clipPath>
+    <pattern id="h${key}" width="${6/sc}" height="${6/sc}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="${6/sc}" stroke="#E3DFD6" stroke-width="${1.2/sc}"/></pattern></defs>`;
+  o += `<rect x="${from}" y="0" width="${len}" height="${Wcm}" fill="#fff"/>`;
+  if (used < to - 0.5){
+    o += `<rect x="${Math.max(from, used)}" y="0" width="${to - Math.max(from, used)}" height="${Wcm}" fill="url(#h${key})"/>`;
+    if ((to - Math.max(from, used)) * mm > 30) o += `<text x="${(Math.max(from, used) + to)/2}" y="${Wcm/2}" dy="0.35em" font-size="${8/sc}" text-anchor="middle" fill="#9AA0A5" ${ff}>остаток рулона</text>`;
+  }
+  for (let x = Math.ceil(from/10)*10; x <= to + 0.01; x += 10){
+    const k = x % 100 === 0 ? 3 : x % 50 === 0 ? 2 : 1;
+    o += `<line x1="${x}" y1="${Wcm}" x2="${x}" y2="${Wcm + k/mm}" stroke="#5E656B" stroke-width="${0.5/sc}"/>`;
+    if (x % 50 === 0) o += `<text x="${x}" y="${Wcm + 4.6/mm}" font-size="${6.5/sc}" text-anchor="${x === from ? 'start' : x >= to - 1 ? 'end' : 'middle'}" fill="#5E656B" ${mf}>${fmt(x/100, x % 100 ? 1 : 0)}</text>`;
+    if (x % 100 === 0 && x > from && x < to) o += `<line x1="${x}" y1="0" x2="${x}" y2="${Wcm}" stroke="#E6E2DA" stroke-width="${0.5/sc}" stroke-dasharray="${2/sc} ${2/sc}"/>`;
+  }
+  o += `<g clip-path="url(#b${key})">`;
+  let labels = '';
+  L.placed.forEach(p => {
+    if (p.y + p.ph <= from + 0.01 || p.y >= to - 0.01) return;
+    const x = p.y, y = p.x, w = p.ph, h = p.pw;
+    if (p.seam) o += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="${0.7/sc}"/>`;
+    else {
+      o += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="var(--film-edge)" stroke-dasharray="${2/sc} ${1.5/sc}" stroke-width="${0.5/sc}"/>`;
+      o += `<rect x="${x+p.m}" y="${y+p.m}" width="${Math.max(0,w-2*p.m)}" height="${Math.max(0,h-2*p.m)}" fill="var(--film)" stroke="var(--film-edge)" stroke-width="${0.7/sc}"/>`;
+    }
+    const vx0 = Math.max(x, from), vx1 = Math.min(x + w, to), cutL = x < from - 0.01, cutR = x + w > to + 0.01;
+    const q = cutL || cutR ? {...p, size: p.size + (cutR ? ' → ниже' : ' ← выше')} : p;
+    labels += label(q, vx0, y, vx1 - vx0, h, sc, ff);
+  });
+  o += '</g>' + labels + `<rect x="${from}" y="0" width="${len}" height="${Wcm}" fill="none" stroke="#B9B3A7" stroke-width="${0.7/sc}"/>`;
+  const vw = len + pad*2, vh = Wcm + rul + pad;
+  return `<svg style="width:${(vw*mm).toFixed(2)}mm;height:${(vh*mm).toFixed(2)}mm" viewBox="${from - pad} ${-pad} ${vw} ${vh}" role="img" aria-label="Полоса рулона">${o}</svg>`;
+}
+function masterScheme(L, Wcm, head){
+  const mm = BAND_MM / BAND, bands = Math.max(1, Math.ceil((L.total - 0.5) / BAND)), sheets = Math.ceil(bands / 2);
+  let out = '';
+  for (let sh = 0; sh < sheets; sh++){
+    out += `<div class="lpage">${sh === 0 ? head : ''}`;
+    for (let k = sh*2; k < sh*2 + 2; k++){
+      const from = k * BAND, to = from + BAND;
+      const ids = L.placed.filter(p => p.y < to - 0.01 && p.y + p.ph > from + 0.01).map(p => p.no).sort((a,b) => a-b);
+      out += `<div class="band"><div class="cap"><span>Рулон ${fmt(from/100,1)} – ${fmt(to/100,1)} м${ids.length ? ` · куски ${ids[0]}–${ids[ids.length-1]}` : ''}</span><span>лист ${sh+1} из ${sheets} · полоса ${k+1}</span></div><div class="bandwrap">${bandSVG(L, Wcm, from, to, mm, k)}</div></div>`;
+    }
+    out += '</div>';
+  }
+  return out;
+}
+function marginBox(F){
+  const m = F.m;
+  return `<div class="prelim" style="margin:0 0 8px">Запас на подрезку: <b>${fmtS(m)} см с каждой стороны</b>. Кусок плёнки больше стекла на <b>${fmtS(2*m)} см</b> по высоте и на <b>${fmtS(2*m)} см</b> по ширине. На схеме пунктир — край куска, заливка — стекло. Лишнее подрезается по месту.</div>`;
+}
+function printCut(){
+  if (!lastLayout){ alert('Раскладка ещё считается, попробуйте через пару секунд.'); return; }
+  const F = figures(), L = lastLayout, Wcm = F.Wm * 100;
+  const head = `${docHead('Раскрой')}
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:20px;margin:10px 0 8px">
+      <h2 style="margin:0">Задание мастеру: раскрой плёнки${state.name ? ' · ' + esc(state.name) : ''}</h2>
+      <div class="sm" style="font-size:8.5pt;color:#5E656B">${esc(F.M.name)} · ширина ${fmt(Wcm)} см · расход ${fmt(L.total/100,2)} м · ${L.placed.length} ${plural(L.placed.length,'кусок','куска','кусков')}${state.address ? ' · ' + esc(state.address) : ''}</div>
+    </div>
+    ${marginBox(F)}`;
+  const html = `<div class="doc">${masterScheme(L, Wcm, head)}
+    <div class="ppage">
+      ${docHead('Раскрой')}
+      ${marginBox(F)}
+      <div class="sec">Таблица резки · размеры в сантиметрах · «от края» — от верхнего края рулона на схеме</div>
+      <table><thead><tr><th>№</th><th>Помещение</th><th class="r">Стекло, в×ш</th><th class="r">Запас</th><th class="r">Кусок, поперёк × вдоль</th><th class="r">От края</th><th class="r">От начала</th><th>✓</th></tr></thead><tbody>
+        ${L.placed.map(p => `<tr class="avoid"><td class="m">${p.no}</td><td>${esc(p.label)}</td><td class="r m">${p.size}</td><td class="r m">${p.seam ? 'стык' : '+' + fmtS(2*p.m)}</td><td class="r m">${fmt(p.pw,1)} × ${fmt(p.ph,1)}</td><td class="r m">${fmt(p.x,1)}</td><td class="r m">${fmt(p.y,1)}</td><td>☐</td></tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>`;
+  doPrint(html, `Раскрой — ${state.name || 'плёнка'}`);
+}
+function doPrint(html, title){
+  $('printArea').innerHTML = html;
+  const t = document.title; document.title = title;
+  setTimeout(() => { window.print(); document.title = t; }, 150);
+}
+$('printClient').addEventListener('click', () => { const rec = newOrder('prelim'); printClient(rec, 'prelim'); });
+$('printFinal').addEventListener('click', () => { if (!confirm('Оформить окончательный заказ-наряд? Используйте его после замера, когда размеры и цена согласованы с клиентом.')) return; const rec = newOrder('final'); printClient(rec, 'final'); });
+$('printCut').addEventListener('click', printCut);
+
+syncInputs();
+renderMat();
+renderObjList(state.name);
+renderOrders();
+renderPanes();
+compute();
+</script>
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
