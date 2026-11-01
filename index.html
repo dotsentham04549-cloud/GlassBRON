@@ -1131,5 +1131,31 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 </script>
+<!-- Установка на телефон: видна, только пока приложение не установлено -->
+<style>
+#installBar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:9999;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;border-radius:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 8px 28px rgba(0,0,0,.18);font-family:var(--sans)}
+#installBar[hidden]{display:none}
+#installBar span{flex:1;font-size:14px}
+#installBar button{font:inherit;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;padding:9px 14px;background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent)}
+#installBar button[data-close]{background:transparent;border:0;padding:6px 8px;font-size:18px;color:var(--muted)}
+</style>
+<div id="installBar" hidden role="region" aria-label="Установка">
+  <span>Поставить на телефон как приложение</span>
+  <button type="button" data-install>Установить</button>
+  <button type="button" data-close aria-label="Скрыть">×</button>
+</div>
+<script>
+(function(){
+  var dp = null, bar = document.getElementById('installBar');
+  function standalone(){ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); dp = e; if(!standalone()) bar.hidden = false; });
+  window.addEventListener('appinstalled', function(){ dp = null; bar.hidden = true; });
+  bar.querySelector('[data-install]').addEventListener('click', function(){
+    if(!dp) return; dp.prompt();
+    dp.userChoice.then(function(){ dp = null; bar.hidden = true; }, function(){ dp = null; bar.hidden = true; });
+  });
+  var x = bar.querySelector('[data-close]'); if(x) x.addEventListener('click', function(){ bar.hidden = true; });
+})();
+</script>
 </body>
 </html>
