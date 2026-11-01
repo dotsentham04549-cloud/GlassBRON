@@ -1,5 +1,5 @@
 // Offline cache for the calculator. Bump VERSION after uploading a new index.html.
-const VERSION = 'film-calc-v3';
+const VERSION = 'film-calc-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
