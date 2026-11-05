@@ -75,6 +75,8 @@ textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .pv-bad{margin:10px 0 0;padding:8px 10px;border-radius:4px;background:var(--warn-soft);color:var(--warn);font-size:13px}
 .pv-bad div{font-family:var(--mono);white-space:pre-wrap}
 button:disabled{opacity:.45;cursor:default}
+a.btnlink{display:inline-flex;align-items:center;font-size:14px;font-weight:500;border-radius:4px;padding:9px 14px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);text-decoration:none}
+a.btnlink[aria-disabled=true]{opacity:.45;pointer-events:none}
 .tariffs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
 .tariffs label{display:block;cursor:pointer}
 .tariffs input{position:absolute;opacity:0;pointer-events:none}
@@ -281,7 +283,20 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
           <div class="btns">
             <button class="primary" id="add">Добавить стекло</button>
             <button id="pasteOpen">Вставить из заявки</button>
+            <button id="formSend">Отправить анкету клиенту</button>
             <button id="reset">Сбросить к стандартным</button>
+          </div>
+          <div id="sendBox" hidden>
+            <label class="f" style="margin-top:14px">Ссылка на анкету (Google Форма)<input id="formUrlIn" data-k="formUrl" placeholder="https://docs.google.com/forms/…/viewform" inputmode="url"></label>
+            <label class="f" style="margin-top:10px">Текст сообщения<textarea data-k="formMsg" rows="3"></textarea></label>
+            <div class="btns">
+              <button class="primary" id="sendShare">Поделиться…</button>
+              <a class="btnlink" id="sendWa" target="_blank" rel="noopener">WhatsApp</a>
+              <a class="btnlink" id="sendTg" target="_blank" rel="noopener">Telegram</a>
+              <button id="sendCopy">Скопировать</button>
+              <button class="x" id="sendClose">Закрыть</button>
+            </div>
+            <p class="note" id="sendNote"></p>
           </div>
           <div id="pasteBox" hidden>
             <label class="f" style="margin-top:14px">Размеры из заявки — как написал клиент
@@ -412,7 +427,7 @@ const DEFAULTS = {
   rollPrice:'18000', rollW:'1.52', rollL:'30', margin:'1', cons:'40', labor:'450', beadMaster:'200', laborBead:'650',
   price:'1650', minArea:'0.5', minOrder:'3000', beadClient:'400', extra:'0',
   zone:'city', freeFrom:'5000', cityFee:'800', suburbFee:'1250', perKm:'35', km:'50', masterPct:'60',
-  company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', workPrice:'1200', workProt:'1700', tariff:'std', why:'Работаем официально: договор, заказ-наряд, акт, оплата по счёту\nПисьменная гарантия на работу\nБронирующая плёнка 210 мкм — толщина указана в документах\nТариф «Защита»: плёнка заводится под штапик и удерживает стекло в раме при ударной волне\nРаботаем бригадой мастеров — объект закрываем быстро и целиком\nСтудия в Воронеже, более 10 лет работы', matId:'m1',
+  company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', formUrl:'', formMsg:'Здравствуйте! Это студия ALL IN. Заполните, пожалуйста, короткую анкету — по ней подготовим предварительный расчёт бронирования стёкол:', workPrice:'1200', workProt:'1700', tariff:'std', why:'Работаем официально: договор, заказ-наряд, акт, оплата по счёту\nПисьменная гарантия на работу\nБронирующая плёнка 210 мкм — толщина указана в документах\nТариф «Защита»: плёнка заводится под штапик и удерживает стекло в раме при ударной волне\nРаботаем бригадой мастеров — объект закрываем быстро и целиком\nСтудия в Воронеже, более 10 лет работы', matId:'m1',
   materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
   client:'', clientPhone:'', address:'', note:'', withScheme:false,
   name:'', panes:HOUSE
@@ -624,6 +639,35 @@ function hashSizes(){
   const g = k => (prm.get(k) || '').trim(), c = g('c'), a = g('a');
   pasteShow(prm.get('sizes') || '', g('o') || [c, a].filter(Boolean).join(', ') || 'Заявка', {client:c, address:a, phone:g('p'), note:g('n')});
 }
+
+/* ---------- отправка анкеты клиенту ---------- */
+function sendText(){ const u = (state.formUrl || '').trim(); return `${(state.formMsg || '').trim()} ${u}`.trim(); }
+function waPhone(){ let d = String(state.clientPhone || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '8') d = '7' + d.slice(1); if (d.length === 10) d = '7' + d; return d.length >= 11 ? d : ''; }
+function sendRefresh(){
+  const u = (state.formUrl || '').trim(), ok = /^https?:\/\/\S+$/.test(u), t = encodeURIComponent(sendText()), ph = waPhone();
+  $('sendShare').disabled = $('sendCopy').disabled = !ok;
+  $('sendWa').href = ok ? `https://wa.me/${ph}?text=${t}` : '#';
+  $('sendTg').href = ok ? `https://t.me/share/url?url=${encodeURIComponent(u)}&text=${encodeURIComponent((state.formMsg || '').trim())}` : '#';
+  [$('sendWa'), $('sendTg')].forEach(a => a.setAttribute('aria-disabled', ok ? 'false' : 'true'));
+  $('sendWa').textContent = ph ? `WhatsApp · ${state.clientPhone}` : 'WhatsApp';
+  $('sendNote').textContent = ok ? '' : 'Вставьте один раз ссылку на анкету — она запомнится.';
+}
+$('formSend').addEventListener('click', () => {
+  $('sendBox').hidden = !$('sendBox').hidden; sendRefresh();
+  if (!$('sendBox').hidden && !(state.formUrl || '').trim()) $('formUrlIn').focus();
+});
+document.querySelectorAll('#sendBox [data-k]').forEach(el => el.addEventListener('input', sendRefresh));
+document.querySelector('input[data-k="clientPhone"]').addEventListener('input', () => { if (!$('sendBox').hidden) sendRefresh(); });
+$('sendClose').addEventListener('click', () => { $('sendBox').hidden = true; });
+$('sendShare').addEventListener('click', async () => {
+  const u = (state.formUrl || '').trim();
+  if (navigator.share){ try{ await navigator.share({title:'Анкета для расчёта', text:(state.formMsg || '').trim(), url:u}); return; }catch(e){ if (e && e.name === 'AbortError') return; } }
+  $('sendCopy').click();
+});
+$('sendCopy').addEventListener('click', async () => {
+  try{ await navigator.clipboard.writeText(sendText()); $('sendNote').textContent = 'Скопировано — вставьте в чат с клиентом.'; }
+  catch(e){ $('sendNote').textContent = 'Не удалось скопировать — выделите ссылку в поле выше вручную.'; }
+});
 
 /* objects */
 function renderObjList(sel){
