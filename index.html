@@ -75,6 +75,14 @@ textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .pv-bad{margin:10px 0 0;padding:8px 10px;border-radius:4px;background:var(--warn-soft);color:var(--warn);font-size:13px}
 .pv-bad div{font-family:var(--mono);white-space:pre-wrap}
 button:disabled{opacity:.45;cursor:default}
+.tariffs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.tariffs label{display:block;cursor:pointer}
+.tariffs input{position:absolute;opacity:0;pointer-events:none}
+.tariffs span{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:4px;background:var(--field)}
+.tariffs b{font-weight:600;font-size:15px}
+.tariffs small{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.tariffs input:checked+span{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--surface)}
+.tariffs input:focus-visible+span{outline:2px solid var(--accent);outline-offset:1px}
 input[inputmode]{font-family:var(--mono);font-size:15px}
 input:focus-visible,button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input[type=checkbox],input[type=radio]{width:18px;height:18px;padding:0;accent-color:var(--accent)}
@@ -201,6 +209,9 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
 .doc .grand span{font-family:var(--cond);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:10pt}
 .doc .grand b{font-family:var(--mono);font-weight:500;font-size:16pt}
 .doc .terms{font-size:8pt;color:#5E656B;margin-top:8px}
+.doc .why{font-size:8.5pt;margin-top:10px;padding:6px 10px;border:1px solid #E3DFD6;border-radius:3px}
+.doc .why ul{margin:3px 0 0;padding-left:16px;columns:2;column-gap:20px}
+.doc .why li{margin:0 0 2px;break-inside:avoid}
 .doc .terms p{margin:0 0 2px}
 .doc .sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:18px;font-size:9pt;color:#5E656B}
 .doc .sign div{border-top:1px solid #B9B3A7;padding-top:4px}
@@ -317,8 +328,13 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
 
         <section class="card">
           <h2 class="kicker">Цена для клиента</h2>
+          <div class="tariffs" role="radiogroup" aria-label="Тариф">
+            <label><input type="radio" name="tariff" value="std"><span><b>Стандарт</b><small id="tStd"></small></span></label>
+            <label><input type="radio" name="tariff" value="prot"><span><b>Защита</b><small id="tProt"></small></span></label>
+          </div>
           <div class="fields">
-            <label class="f">Работа, ₽/м²<input data-k="workPrice" inputmode="decimal"></label>
+            <label class="f">Стандарт: работа, ₽/м²<input data-k="workPrice" inputmode="decimal"></label>
+            <label class="f">Защита: работа, ₽/м²<input data-k="workProt" inputmode="decimal"></label>
             <label class="f">Мин. площадь стекла, м²<input data-k="minArea" inputmode="decimal"></label>
             <label class="f">Мин. заказ, ₽<input data-k="minOrder" inputmode="decimal"></label>
             <label class="f">Штапики, ₽/створка<input data-k="beadClient" inputmode="decimal"></label>
@@ -326,6 +342,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <label class="f">Округление итога<select data-s="roundMode"><option value="none">Не округлять</option><option value="down">Вниз, в пользу клиента</option><option value="nearest">До ближайшего</option></select></label>
             <label class="f">Шаг округления<select data-s="roundStep"><option value="10">10 ₽</option><option value="50">50 ₽</option><option value="100">100 ₽</option></select></label>
           </div>
+          <p class="note">«Стандарт» — оклейка по видимой части стекла, штапики по желанию за доплату. «Защита» — все стёкла с заводкой под штапик, доплата за штапики не берётся, она уже в цене.</p>
           <p class="note">Клиенту цена складывается из работы и материала (цена материала задаётся в блоке «Материал»). Стекло меньше минимальной площади считается как минимальная площадь — и для клиента, и для оплаты мастеру.</p>
         </section>
 
@@ -352,6 +369,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <label class="f">Телефон<input data-k="phone" placeholder="+7 ..."></label>
             <label class="f">Сайт<input data-k="site"></label>
             <label class="f" style="grid-column:1/-1">Реквизиты исполнителя<input data-k="req" placeholder="ИП, ИНН, ОГРНИП, адрес"></label>
+            <label class="f" style="grid-column:1/-1">«Почему мы» — в предварительном расчёте, по пункту в строке<textarea data-k="why" rows="6"></textarea></label>
             <label class="f">Цены действительны, дней<input data-k="validDays" inputmode="numeric"></label>
           </div>
         </details>
@@ -394,12 +412,12 @@ const DEFAULTS = {
   rollPrice:'18000', rollW:'1.52', rollL:'30', margin:'1', cons:'40', labor:'450', beadMaster:'200',
   price:'1650', minArea:'0.5', minOrder:'3000', beadClient:'400', extra:'0',
   zone:'city', freeFrom:'5000', cityFee:'800', suburbFee:'1250', perKm:'35', km:'50', masterPct:'60',
-  company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', workPrice:'850', matId:'m1',
+  company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', workPrice:'1200', workProt:'1700', tariff:'std', why:'Работаем официально: договор, заказ-наряд, акт, оплата по счёту\nПисьменная гарантия на работу\nБронирующая плёнка 210 мкм — толщина указана в документах\nТариф «Защита»: плёнка заводится под штапик и удерживает стекло в раме при ударной волне\nРаботаем бригадой мастеров — объект закрываем быстро и целиком\nСтудия в Воронеже, более 10 лет работы', matId:'m1',
   materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
   client:'', clientPhone:'', address:'', note:'', withScheme:false,
   name:'', panes:HOUSE
 };
-const OBJ_FIELDS = ['name','client','clientPhone','address','note','panes','matId'];
+const OBJ_FIELDS = ['name','client','clientPhone','address','note','panes','matId','tariff'];
 const OWN_MAT = {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'};
 function ensureMaterials(st){
   if (!Array.isArray(st.materials) || !st.materials.length){
@@ -429,29 +447,32 @@ function loadObjs(){ try{ return JSON.parse(localStorage.getItem(OBJS)) || null;
 function saveObjs(o){ try{ localStorage.setItem(OBJS, JSON.stringify(o)); }catch(e){} }
 let state = load();
 if (!state.phone) state.phone = DEFAULTS.phone;
+if (state.workPrice === '850') state.workPrice = DEFAULTS.workPrice;   // старая цена 850+800 → новая 1200+800
 
 /* ---------- inputs ---------- */
-document.querySelectorAll('input[data-k]').forEach(inp => inp.addEventListener('input', () => {
+document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.addEventListener('input', () => {
   state[inp.dataset.k] = inp.value; save();
   if (inp.dataset.k === 'company') $('brandName').textContent = state.company || 'ALL IN';
   schedule();
 }));
 document.querySelectorAll('input[name="zone"]').forEach(rb => rb.addEventListener('change', () => { state.zone = rb.value; save(); schedule(true); }));
+document.querySelectorAll('input[name="tariff"]').forEach(rb => rb.addEventListener('change', () => { state.tariff = rb.value; save(); renderPanes(); schedule(); }));
 function syncInputs(){
   document.querySelectorAll('select[data-s]').forEach(el => el.value = state[el.dataset.s] ?? DEFAULTS[el.dataset.s]);
-  document.querySelectorAll('input[data-k]').forEach(inp => inp.value = state[inp.dataset.k] ?? '');
+  document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.value = state[inp.dataset.k] ?? '');
+  document.querySelectorAll('input[name="tariff"]').forEach(rb => rb.checked = rb.value === (state.tariff || 'std'));
   document.querySelectorAll('input[name="zone"]').forEach(rb => rb.checked = rb.value === state.zone);
   $('brandName').textContent = state.company || 'ALL IN';
 }
 
 function renderPanes(){
-  const tb = $('panes');
+  const tb = $('panes'), prot = state.tariff === 'prot';
   tb.innerHTML = state.panes.map((p,i) => `<tr>
       <td class="nm"><input data-i="${i}" data-f="n" aria-label="Помещение" value="${esc(p.n)}"></td>
       <td><input inputmode="decimal" data-i="${i}" data-f="h" aria-label="Высота, см" value="${esc(p.h)}"></td>
       <td><input inputmode="decimal" data-i="${i}" data-f="w" aria-label="Ширина, см" value="${esc(p.w)}"></td>
       <td><input inputmode="numeric" data-i="${i}" data-f="q" aria-label="Количество" value="${esc(p.q)}"></td>
-      <td class="c"><input type="checkbox" data-bead="${i}" aria-label="Снимать штапики" ${p.bead?'checked':''}></td>
+      <td class="c"><input type="checkbox" data-bead="${i}" aria-label="Снимать штапики" ${p.bead || prot ? 'checked' : ''} ${prot ? 'disabled title="В тарифе «Защита» все стёкла под штапик"' : ''}></td>
       <td class="area" id="a${i}"></td>
       <td><button class="x" data-del="${i}" aria-label="Удалить строку">✕</button></td></tr>`).join('');
   tb.querySelectorAll('input[data-f]').forEach(inp => inp.addEventListener('input', () => {
@@ -764,7 +785,7 @@ let timer = null, lastLayout = null, lastKey = '', pendingKey = '';
 function schedule(soft){ clearTimeout(timer); timer = setTimeout(() => compute(soft), 220); }
 
 function figures(){
-  const M = mat(), rollPrice = num(M.rollPrice), Wm = num(M.rollW), Lm = num(M.rollL), sell = num(M.sell), workP = num(state.workPrice);
+  const M = mat(), rollPrice = num(M.rollPrice), Wm = num(M.rollW), Lm = num(M.rollL), sell = num(M.sell), prot = state.tariff === 'prot', workP = num(prot ? state.workProt : state.workPrice);
   const m = Math.max(0, num(state.margin)), cons = num(state.cons), labor = num(state.labor);
   const price = workP + sell, minArea = num(state.minArea), minOrder = num(state.minOrder), extra = num(state.extra);
   const beadMaster = num(state.beadMaster), beadClient = num(state.beadClient);
@@ -773,11 +794,11 @@ function figures(){
   state.panes.forEach((p,i) => {
     const w = num(p.w), h = num(p.h), q = Math.max(0, Math.round(num(p.q))), a = w*h/1e4;
     if (a > 0 && q > 0){
-      glass += a*q; bill += Math.max(a, minArea)*q; count += q; if (a < minArea) smallCount += q; if (p.bead) beads += q;
-      rows.push({i, n:(p.n||'').trim() || 'Стекло', h, w, q, a, bead:!!p.bead});
+      glass += a*q; bill += Math.max(a, minArea)*q; count += q; if (a < minArea) smallCount += q; if (p.bead || prot) beads += q;
+      rows.push({i, n:(p.n||'').trim() || 'Стекло', h, w, q, a, bead:!!p.bead && !prot});
     }
   });
-  const beadRev = beads * beadClient, areaRev = bill * price, workRev = bill * workP, matRev = bill * sell;
+  const beadRev = prot ? 0 : beads * beadClient, areaRev = bill * price, workRev = bill * workP, matRev = bill * sell;
   const raw = areaRev + beadRev + extra, work = Math.max(raw, minOrder), topUp = work - raw;
   const zone = state.zone || 'city';
   let travel = 0, travelNote = '';
@@ -785,7 +806,7 @@ function figures(){
   else if (zone === 'suburb'){ travel = num(state.suburbFee); travelNote = 'пригород'; }
   else { const km = num(state.km); travel = km * 2 * num(state.perKm); travelNote = `${fmt(km)} км × 2 × ${fmt(num(state.perKm))} ₽`; }
   const masterTravel = zone === 'city' ? 0 : travel * num(state.masterPct) / 100;
-  return {M, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient,
+  return {M, prot, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient,
     glass, bill, smallCount, beads, count, rows, beadRev, areaRev, raw, work, topUp, zone, travel, travelNote, masterTravel,
     exact: work + travel, ...rounding(work + travel)};
 }
@@ -798,7 +819,13 @@ function rounding(v){
   return {revenue: r, roundDiff: r - v};
 }
 
+function tariffLabels(){
+  const sell = num(mat().sell), st = $('tStd'), pr = $('tProt');
+  if (st) st.textContent = `${fmt(num(state.workPrice) + sell)} ₽/м²`;
+  if (pr) pr.textContent = `${fmt(num(state.workProt) + sell)} ₽/м² · под штапик`;
+}
 function compute(soft){
+  tariffLabels();
   const F = figures();
   state.panes.forEach((p,i) => { const c = $('a'+i); if (c){ const a = num(p.w)*num(p.h)/1e4, q = Math.round(num(p.q)); c.textContent = a > 0 && q > 0 ? fmt(a*q,2) : '—'; } });
   $('kmField').style.display = state.zone === 'region' ? '' : 'none';
@@ -856,7 +883,7 @@ function renderSummary(F, L, seams, Wcm){
     <h2 class="kicker">Итог${state.name ? ' · ' + esc(state.name) : ''}</h2>
     <div class="total-label">Цена клиенту</div>
     <div class="total">${rub(F.revenue)}</div>
-    <p class="sub">${fmt(F.glass,2)} м² стекла · к оплате ${fmt(F.bill,2)} м² × (работа ${fmt(F.workP)} + материал ${fmt(F.sell)}) ₽${F.beads ? ` · штапики ${F.beads} шт.` : ''}${F.travel ? ` · выезд ${rub(F.travel)}` : ''}</p>
+    <p class="sub">${fmt(F.glass,2)} м² стекла · тариф «${F.prot ? 'Защита' : 'Стандарт'}» · к оплате ${fmt(F.bill,2)} м² × (работа ${fmt(F.workP)} + материал ${fmt(F.sell)}) ₽${F.beads ? ` · штапики ${F.beads} шт.` : ''}${F.travel ? ` · выезд ${rub(F.travel)}` : ''}</p>
     <div class="kpis">
       <div class="kpi"><span>Прибыль</span><strong class="${profit>=0?'pos':'neg'}">${pend(rub(profit))}</strong></div>
       <div class="kpi"><span>Маржа</span><strong class="${profit>=0?'pos':'neg'}">${pend(fmt(marginPct*100) + '%')}</strong></div>
@@ -1043,12 +1070,13 @@ function printClient(rec, kind){
   extra.push([F.travel ? 'Выезд мастера' : 'Выезд мастера по городу', F.travel, !F.travel]);
   const facts = [['Исполнитель', [state.company, state.req].filter(Boolean).join(' · ')], ['Заказчик', state.client], ['Телефон заказчика', state.clientPhone], ['Адрес объекта', state.address], ['Примечание', state.note], ['Материал', F.M.name]].filter(r => (r[1]||'').trim());
   const own = F.sell <= 0;
-  const breakdown = [[`Работа по оклейке · ${fmt(F.bill,2)} м² × ${fmt(F.workP)} ₽`, F.workRev]];
+  const breakdown = [[`Работа по оклейке${F.prot ? ' с заводкой под штапик' : ''} · ${fmt(F.bill,2)} м² × ${fmt(F.workP)} ₽`, F.workRev]];
   breakdown.push(own ? ['Материал предоставлен заказчиком', null] : [`Материал · ${fmt(F.bill,2)} м² × ${fmt(F.sell)} ₽`, F.matRev]);
-  if (F.beads) breakdown.push([`Монтаж под штапик · ${F.beads} × ${fmt(F.beadClient)} ₽`, F.beadRev]);
+  if (F.beads && !F.prot) breakdown.push([`Монтаж под штапик · ${F.beads} × ${fmt(F.beadClient)} ₽`, F.beadRev]);
+  const why = final ? [] : String(state.why || '').split('\n').map(t => t.trim()).filter(Boolean);
   const html = `<div class="doc"><div style="max-width:182mm">${docHead(final ? 'Заказ-наряд' : 'Предварительный расчёт', rec)}
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 2px"><h2 style="margin:0">Бронирование стёкол защитной плёнкой</h2></div>
-    <p class="lead">${esc(state.name || '')}${state.name ? ' · ' : ''}${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · работа ${fmt(F.workP)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}</p>
+    <p class="lead">Тариф «${F.prot ? 'Защита' : 'Стандарт'}»${F.prot ? ' — плёнка заводится под штапик' : ' — оклейка по видимой части стекла'} · ${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · работа ${fmt(F.workP)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}</p>
     ${facts.length ? `<dl class="facts">${facts.map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>` : ''}
     <table class="receipt"><thead><tr><th>№</th><th>Помещение</th><th class="r">Размер, см<br>в × ш</th><th class="r">Кол-во</th><th class="r">Площадь, м²</th><th class="r">К оплате, м²</th><th class="r">Сумма, ₽</th></tr></thead>
       <tbody>${glassRows}</tbody>
@@ -1068,6 +1096,7 @@ function printClient(rec, kind){
         ${F.smallCount ? `<p>* Стёкла площадью менее ${fmt(F.minArea,2)} м² учитываются как ${fmt(F.minArea,2)} м².</p>` : ''}
         ${final ? '' : `<p>Цены действительны ${esc(state.validDays || '14')} ${plural(num(state.validDays)||14,'день','дня','дней')} с даты составления.</p>`}
       </div>
+      ${why.length ? `<div class="why"><b>Почему ${esc(state.company || 'мы')}</b><ul>${why.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}
       <div class="sign"><div>Исполнитель</div><div>Заказчик</div></div>
     </div>
   </div></div>`;
