@@ -868,7 +868,7 @@ function render(F, L, seams, Wcm){
 function renderSummary(F, L, seams, Wcm){
   const lenM = L ? L.total / 100 : 0, filmArea = lenM * F.Wm;
   const filmCost = L ? lenM * (F.Lm > 0 ? F.rollPrice / F.Lm : 0) : 0;
-  const consCost = F.glass * F.cons, laborArea = (F.bill - F.beadBill) * F.labor, laborBead = F.beadBill * F.laborBead, laborCost = laborArea + laborBead;
+  const consCost = F.glass * F.cons, laborArea = (F.bill - F.beadBill) * F.labor, laborBead = F.beadBill * F.laborBead, laborExact = laborArea + laborBead + F.masterTravel, masterPay = Math.round(laborExact / 100) * 100, laborCost = masterPay - F.masterTravel;
   const cost = filmCost + consCost + laborCost + F.masterTravel;
   const profit = F.revenue - cost, marginPct = F.revenue > 0 ? profit / F.revenue : 0;
   const waste = filmArea > 0 ? Math.max(0, 1 - F.glass / filmArea) : 0;
@@ -896,7 +896,7 @@ function renderSummary(F, L, seams, Wcm){
       <div><span>Отход с запасом</span><span>${pend(fmt(waste*100) + '%')}</span></div>
       <div><span>Плёнка</span><span>${pend(rub(filmCost))}</span></div>
       <div><span>Расходники</span><span>${rub(consCost)}</span></div>
-      <div><span>Мастеру</span><span>${rub(laborCost + F.masterTravel)}</span></div>
+      <div><span>Мастеру</span><span>${rub(masterPay)}</span></div>
       ${F.bill - F.beadBill > 0.001 ? `<div class="ind"><span>оклейка</span><span>${fmt(F.bill - F.beadBill,2)} м² × ${fmt(F.labor)} = ${rub(laborArea)}</span></div>` : ''}
       ${F.beadBill ? `<div class="ind"><span>под штапик</span><span>${fmt(F.beadBill,2)} м² × ${fmt(F.laborBead)} = ${rub(laborBead)}</span></div>` : ''}
       ${F.masterTravel ? `<div class="ind"><span>дорога</span><span>${rub(F.masterTravel)}</span></div>` : ''}
