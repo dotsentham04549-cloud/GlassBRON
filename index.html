@@ -218,6 +218,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
 .doc .terms{font-size:8pt;color:#5E656B;margin-top:8px}
 .doc .why{font-size:8.5pt;margin-top:10px;padding:6px 10px;border:1px solid #E3DFD6;border-radius:3px}
 .doc .why ul{margin:3px 0 0;padding-left:16px;columns:2;column-gap:20px}
+.doc .why{break-inside:avoid}
 .doc .why li{margin:0 0 2px;break-inside:avoid}
 .doc .terms p{margin:0 0 2px}
 .doc .sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:18px;font-size:9pt;color:#5E656B}
@@ -1147,14 +1148,14 @@ function printClient(rec, kind){
       ${final
         ? '<div class="prelim">Объём и стоимость работ определены по результатам замера на объекте и согласованы с заказчиком. Заказчик с перечнем, объёмом и стоимостью работ ознакомлен и согласен.</div>'
         : '<div class="prelim">Расчёт предварительный: составлен по размерам, предоставленным заказчиком. Окончательная стоимость уточняется после замера на объекте и может измениться, если изменятся размеры, количество стёкол или условия монтажа.</div>'}
-      <div class="terms">
+    </div>
+      <div class="terms avoid">
         <p>${own ? 'Материал предоставлен заказчиком. В стоимость работы входит' : 'В стоимость входит материал,'} подготовка и обезжиривание стекла, оклейка, подрезка плёнки по контуру и уборка рабочего места.</p>
         ${F.smallCount ? `<p>* Стёкла площадью менее ${fmt(F.minArea,2)} м² учитываются как ${fmt(F.minArea,2)} м².</p>` : ''}
         ${final ? '' : `<p>Цены действительны ${esc(state.validDays || '14')} ${plural(num(state.validDays)||14,'день','дня','дней')} с даты составления.</p>`}
       </div>
       ${why.length ? `<div class="why"><b>Почему ${esc(state.company || 'мы')}</b><ul>${why.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}
-      <div class="sign"><div>Исполнитель</div><div>Заказчик</div></div>
-    </div>
+      <div class="sign avoid"><div>Исполнитель</div><div>Заказчик</div></div>
   </div></div>`;
   doPrint(html, `${final ? 'Заказ-наряд' : 'Предварительный расчёт'} ${rec ? rec.no : ''} — ${state.name || 'бронирование стёкол'}`);
 }
@@ -1303,9 +1304,10 @@ async function makePdf(html, title){
     const blob = await html2pdf().set({
       margin:[12, 14, 14, 14], filename:name,
       image:{type:'jpeg', quality:0.95},
-      html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff'},
+      // onclone: в копии для PDF всегда светлая тема, иначе в тёмной теме текст выходит бледным
+      html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff', scrollX:0, scrollY:0, onclone:d => d.documentElement.setAttribute('data-theme', 'light')},
       jsPDF:{unit:'mm', format:'a4', orientation:'portrait'},
-      pagebreak:{mode:['css', 'legacy'], avoid:['tr', '.grand', '.why', '.sign', '.totals', '.facts']}
+      pagebreak:{mode:['css'], avoid:['tr', '.avoid', '.terms', '.why', '.sign']}
     }).from(box.firstElementChild || box).outputPdf('blob');
     pdfFile = new File([blob], name, {type:'application/pdf'});
     pdfBar(`PDF готов · ${Math.max(1, Math.round(blob.size / 1024))} КБ`, true);
