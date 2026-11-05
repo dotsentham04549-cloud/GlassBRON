@@ -394,6 +394,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <label class="f" style="grid-column:1/-1">«Почему мы» — в предварительном расчёте, по пункту в строке<textarea data-k="why" rows="6"></textarea></label>
             <label class="f">Цены действительны, дней<input data-k="validDays" inputmode="numeric"></label>
           </div>
+          <label class="chk" style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px"><input type="checkbox" id="splitLines" style="width:auto"> Показывать в документах материал и работу отдельно (если организация просит)</label>
         </details>
       </div>
 
@@ -437,7 +438,7 @@ const DEFAULTS = {
   zone:'city', freeFrom:'5000', cityFee:'800', suburbFee:'1250', perKm:'35', km:'50', masterPct:'60',
   company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', formUrl:'', formMsg:'Здравствуйте! Это студия ALL IN. Заполните, пожалуйста, короткую анкету — по ней подготовим предварительный расчёт бронирования стёкол:', workPrice:'1200', workProt:'1700', tariff:'std', why:'Работаем официально: договор, заказ-наряд, акт, оплата по счёту\nПисьменная гарантия на работу\nБронирующая плёнка 210 мкм — толщина указана в документах\nТариф «Защита»: плёнка заводится под штапик и удерживает стекло в раме при ударной волне\nРаботаем бригадой мастеров — объект закрываем быстро и целиком\nСтудия в Воронеже, более 10 лет работы', matId:'m1',
   materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
-  client:'', clientPhone:'', address:'', note:'', withScheme:false,
+  client:'', clientPhone:'', address:'', note:'', withScheme:false, splitLines:false,
   name:'', panes:HOUSE
 };
 const OBJ_FIELDS = ['name','client','clientPhone','address','note','panes','matId','tariff'];
@@ -479,11 +480,13 @@ document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.a
   schedule();
 }));
 document.querySelectorAll('input[name="zone"]').forEach(rb => rb.addEventListener('change', () => { state.zone = rb.value; save(); schedule(true); }));
+$('splitLines').addEventListener('change', e => { state.splitLines = e.target.checked; save(); });
 document.querySelectorAll('input[name="tariff"]').forEach(rb => rb.addEventListener('change', () => { state.tariff = rb.value; save(); renderPanes(); schedule(); }));
 function syncInputs(){
   document.querySelectorAll('select[data-s]').forEach(el => el.value = state[el.dataset.s] ?? DEFAULTS[el.dataset.s]);
   document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.value = state[inp.dataset.k] ?? '');
   document.querySelectorAll('input[name="tariff"]').forEach(rb => rb.checked = rb.value === (state.tariff || 'std'));
+  $('splitLines').checked = !!state.splitLines;
   document.querySelectorAll('input[name="zone"]').forEach(rb => rb.checked = rb.value === state.zone);
   $('brandName').textContent = state.company || 'ALL IN';
 }
@@ -1127,13 +1130,16 @@ function printClient(rec, kind){
   extra.push([F.travel ? 'Выезд мастера' : 'Выезд мастера по городу', F.travel, !F.travel]);
   const facts = [['Исполнитель', [state.company, state.req].filter(Boolean).join(' · ')], ['Заказчик', state.client], ['Телефон заказчика', state.clientPhone], ['Адрес объекта', state.address], ['Примечание', state.note], ['Материал', F.M.name]].filter(r => (r[1]||'').trim());
   const own = F.sell <= 0;
-  const breakdown = [[`Работа по оклейке${F.prot ? ' с заводкой под штапик' : ''} · ${fmt(F.bill,2)} м² × ${fmt(F.workP)} ₽`, F.workRev]];
-  breakdown.push(own ? ['Материал предоставлен заказчиком', null] : [`Материал · ${fmt(F.bill,2)} м² × ${fmt(F.sell)} ₽`, F.matRev]);
+  const split = own || !!state.splitLines, perM2 = F.workP + F.sell;
+  const breakdown = split
+    ? [[`Работа по оклейке${F.prot ? ' с заводкой под штапик' : ''} · ${fmt(F.bill,2)} м² × ${fmt(F.workP)} ₽`, F.workRev],
+       own ? ['Материал предоставлен заказчиком', null] : [`Материал · ${fmt(F.bill,2)} м² × ${fmt(F.sell)} ₽`, F.matRev]]
+    : [[`Бронирование стёкол${F.prot ? ' с заводкой под штапик' : ''}, материал и работа · ${fmt(F.bill,2)} м² × ${fmt(perM2)} ₽`, F.workRev + F.matRev]];
   if (F.beads && !F.prot) breakdown.push([`Монтаж под штапик · ${F.beads} × ${fmt(F.beadClient)} ₽`, F.beadRev]);
   const why = final ? [] : String(state.why || '').split('\n').map(t => t.trim()).filter(Boolean);
   const html = `<div class="doc"><div style="max-width:182mm">${docHead(final ? 'Заказ-наряд' : 'Предварительный расчёт', rec)}
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 2px"><h2 style="margin:0">Бронирование стёкол защитной плёнкой</h2></div>
-    <p class="lead">Тариф «${F.prot ? 'Защита' : 'Стандарт'}»${F.prot ? ' — плёнка заводится под штапик' : ' — оклейка по видимой части стекла'} · ${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · работа ${fmt(F.workP)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}</p>
+    <p class="lead">Тариф «${F.prot ? 'Защита' : 'Стандарт'}»${F.prot ? ' — плёнка заводится под штапик' : ' — оклейка по видимой части стекла'} · ${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · ${split ? `работа ${fmt(F.workP)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}` : `${fmt(perM2)} ₽/м² с материалом`}</p>
     ${facts.length ? `<dl class="facts">${facts.map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>` : ''}
     <table class="receipt"><thead><tr><th>№</th><th>Помещение</th><th class="r">Размер, см<br>в × ш</th><th class="r">Кол-во</th><th class="r">Площадь, м²</th><th class="r">К оплате, м²</th><th class="r">Сумма, ₽</th></tr></thead>
       <tbody>${glassRows}</tbody>
