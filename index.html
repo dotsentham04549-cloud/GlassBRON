@@ -319,7 +319,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
           <div class="fields">
             <label class="f">Запас на сторону, см<input data-k="margin" inputmode="decimal"></label>
             <label class="f">Мастеру за м², ₽<input data-k="labor" inputmode="decimal"></label>
-            <label class="f">Мастеру за штапики, ₽<input data-k="beadMaster" inputmode="decimal"></label>
+            <label class="f">Мастеру под штапик, ₽/м²<input data-k="laborBead" inputmode="decimal"></label>
             <label class="f">Мастеру за дорогу, %<input data-k="masterPct" inputmode="decimal"></label>
             <label class="f">Расходники, ₽/м²<input data-k="cons" inputmode="decimal"></label>
           </div>
@@ -409,7 +409,7 @@ const KEY = 'film-calc-v2', OLDKEY = 'film-calc-v1', OBJS = 'film-calc-objects-v
 const HOUSE = [{n:'Гостиная',h:'140',w:'65',q:'2',bead:false},{n:'Кухня',h:'120',w:'50',q:'1',bead:false},{n:'Ванная',h:'25',w:'35',q:'1',bead:false}];
 
 const DEFAULTS = {
-  rollPrice:'18000', rollW:'1.52', rollL:'30', margin:'1', cons:'40', labor:'450', beadMaster:'200',
+  rollPrice:'18000', rollW:'1.52', rollL:'30', margin:'1', cons:'40', labor:'450', beadMaster:'200', laborBead:'650',
   price:'1650', minArea:'0.5', minOrder:'3000', beadClient:'400', extra:'0',
   zone:'city', freeFrom:'5000', cityFee:'800', suburbFee:'1250', perKm:'35', km:'50', masterPct:'60',
   company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', workPrice:'1200', workProt:'1700', tariff:'std', why:'Работаем официально: договор, заказ-наряд, акт, оплата по счёту\nПисьменная гарантия на работу\nБронирующая плёнка 210 мкм — толщина указана в документах\nТариф «Защита»: плёнка заводится под штапик и удерживает стекло в раме при ударной волне\nРаботаем бригадой мастеров — объект закрываем быстро и целиком\nСтудия в Воронеже, более 10 лет работы', matId:'m1',
@@ -788,13 +788,13 @@ function figures(){
   const M = mat(), rollPrice = num(M.rollPrice), Wm = num(M.rollW), Lm = num(M.rollL), sell = num(M.sell), prot = state.tariff === 'prot', workP = num(prot ? state.workProt : state.workPrice);
   const m = Math.max(0, num(state.margin)), cons = num(state.cons), labor = num(state.labor);
   const price = workP + sell, minArea = num(state.minArea), minOrder = num(state.minOrder), extra = num(state.extra);
-  const beadMaster = num(state.beadMaster), beadClient = num(state.beadClient);
-  let glass = 0, bill = 0, smallCount = 0, beads = 0, count = 0;
+  const beadMaster = num(state.beadMaster), beadClient = num(state.beadClient), laborBead = num(state.laborBead);
+  let glass = 0, bill = 0, smallCount = 0, beads = 0, beadBill = 0, count = 0;
   const rows = [];
   state.panes.forEach((p,i) => {
     const w = num(p.w), h = num(p.h), q = Math.max(0, Math.round(num(p.q))), a = w*h/1e4;
     if (a > 0 && q > 0){
-      glass += a*q; bill += Math.max(a, minArea)*q; count += q; if (a < minArea) smallCount += q; if (p.bead || prot) beads += q;
+      glass += a*q; bill += Math.max(a, minArea)*q; count += q; if (a < minArea) smallCount += q; if (p.bead || prot){ beads += q; beadBill += Math.max(a, minArea)*q; }
       rows.push({i, n:(p.n||'').trim() || 'Стекло', h, w, q, a, bead:!!p.bead && !prot});
     }
   });
@@ -806,7 +806,7 @@ function figures(){
   else if (zone === 'suburb'){ travel = num(state.suburbFee); travelNote = 'пригород'; }
   else { const km = num(state.km); travel = km * 2 * num(state.perKm); travelNote = `${fmt(km)} км × 2 × ${fmt(num(state.perKm))} ₽`; }
   const masterTravel = zone === 'city' ? 0 : travel * num(state.masterPct) / 100;
-  return {M, prot, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient,
+  return {M, prot, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient, laborBead, beadBill,
     glass, bill, smallCount, beads, count, rows, beadRev, areaRev, raw, work, topUp, zone, travel, travelNote, masterTravel,
     exact: work + travel, ...rounding(work + travel)};
 }
@@ -868,7 +868,7 @@ function render(F, L, seams, Wcm){
 function renderSummary(F, L, seams, Wcm){
   const lenM = L ? L.total / 100 : 0, filmArea = lenM * F.Wm;
   const filmCost = L ? lenM * (F.Lm > 0 ? F.rollPrice / F.Lm : 0) : 0;
-  const consCost = F.glass * F.cons, laborArea = F.bill * F.labor, laborBead = F.beads * F.beadMaster, laborCost = laborArea + laborBead;
+  const consCost = F.glass * F.cons, laborArea = (F.bill - F.beadBill) * F.labor, laborBead = F.beadBill * F.laborBead, laborCost = laborArea + laborBead;
   const cost = filmCost + consCost + laborCost + F.masterTravel;
   const profit = F.revenue - cost, marginPct = F.revenue > 0 ? profit / F.revenue : 0;
   const waste = filmArea > 0 ? Math.max(0, 1 - F.glass / filmArea) : 0;
@@ -897,8 +897,8 @@ function renderSummary(F, L, seams, Wcm){
       <div><span>Плёнка</span><span>${pend(rub(filmCost))}</span></div>
       <div><span>Расходники</span><span>${rub(consCost)}</span></div>
       <div><span>Мастеру</span><span>${rub(laborCost + F.masterTravel)}</span></div>
-      <div class="ind"><span>оклейка</span><span>${fmt(F.bill,2)} × ${fmt(F.labor)} = ${rub(laborArea)}</span></div>
-      ${F.beads ? `<div class="ind"><span>штапики</span><span>${F.beads} × ${fmt(F.beadMaster)} = ${rub(laborBead)}</span></div>` : ''}
+      ${F.bill - F.beadBill > 0.001 ? `<div class="ind"><span>оклейка</span><span>${fmt(F.bill - F.beadBill,2)} м² × ${fmt(F.labor)} = ${rub(laborArea)}</span></div>` : ''}
+      ${F.beadBill ? `<div class="ind"><span>под штапик</span><span>${fmt(F.beadBill,2)} м² × ${fmt(F.laborBead)} = ${rub(laborBead)}</span></div>` : ''}
       ${F.masterTravel ? `<div class="ind"><span>дорога</span><span>${rub(F.masterTravel)}</span></div>` : ''}
       ${Math.abs(F.roundDiff) >= 0.5 ? `<div><span>Округление</span><span>${F.roundDiff > 0 ? '+' : '−'}${rub(Math.abs(F.roundDiff))}</span></div>` : ''}
       <div><span>Выезд клиенту</span><span>${F.travel ? rub(F.travel) : '0 ₽'} · ${F.travelNote}</span></div>
