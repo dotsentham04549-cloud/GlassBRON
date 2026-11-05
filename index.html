@@ -247,7 +247,9 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
           </div>
           <div class="fields wide" style="margin-top:14px">
             <label class="f">Заказчик<input data-k="client" placeholder="ФИО или организация"></label>
+            <label class="f">Телефон заказчика<input data-k="clientPhone" type="tel" placeholder="+7 ..."></label>
             <label class="f">Адрес объекта<input data-k="address" placeholder="Город, улица, дом"></label>
+            <label class="f">Примечание<input data-k="note" placeholder="Пожелания, особенности объекта"></label>
           </div>
           <p class="note" id="objNote"></p>
           <div class="btns" style="margin-top:10px">
@@ -349,6 +351,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <label class="f">Исполнитель<input data-k="company"></label>
             <label class="f">Телефон<input data-k="phone" placeholder="+7 ..."></label>
             <label class="f">Сайт<input data-k="site"></label>
+            <label class="f" style="grid-column:1/-1">Реквизиты исполнителя<input data-k="req" placeholder="ИП, ИНН, ОГРНИП, адрес"></label>
             <label class="f">Цены действительны, дней<input data-k="validDays" inputmode="numeric"></label>
           </div>
         </details>
@@ -391,12 +394,12 @@ const DEFAULTS = {
   rollPrice:'18000', rollW:'1.52', rollL:'30', margin:'1', cons:'40', labor:'450', beadMaster:'200',
   price:'1650', minArea:'0.5', minOrder:'3000', beadClient:'400', extra:'0',
   zone:'city', freeFrom:'5000', cityFee:'800', suburbFee:'1250', perKm:'35', km:'50', masterPct:'60',
-  company:'ALL IN', phone:'', site:'allinvrn.ru', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', workPrice:'850', matId:'m1',
+  company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', workPrice:'850', matId:'m1',
   materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
-  client:'', address:'', withScheme:false,
+  client:'', clientPhone:'', address:'', note:'', withScheme:false,
   name:'', panes:HOUSE
 };
-const OBJ_FIELDS = ['name','client','address','panes','matId'];
+const OBJ_FIELDS = ['name','client','clientPhone','address','note','panes','matId'];
 const OWN_MAT = {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'};
 function ensureMaterials(st){
   if (!Array.isArray(st.materials) || !st.materials.length){
@@ -425,6 +428,7 @@ function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e
 function loadObjs(){ try{ return JSON.parse(localStorage.getItem(OBJS)) || null; }catch(e){ return null; } }
 function saveObjs(o){ try{ localStorage.setItem(OBJS, JSON.stringify(o)); }catch(e){} }
 let state = load();
+if (!state.phone) state.phone = DEFAULTS.phone;
 
 /* ---------- inputs ---------- */
 document.querySelectorAll('input[data-k]').forEach(inp => inp.addEventListener('input', () => {
@@ -486,7 +490,7 @@ $('add').addEventListener('click', () => {
 });
 $('reset').addEventListener('click', () => {
   if (!confirm('Вернуть стандартные цены и пример списка стёкол? Реквизиты сохранятся.')) return;
-  const keep = {company:state.company, phone:state.phone, site:state.site, validDays:state.validDays, materials:clone(state.materials)};
+  const keep = {company:state.company, phone:state.phone, site:state.site, req:state.req, validDays:state.validDays, materials:clone(state.materials)};
   state = ensureMaterials(Object.assign(clone(DEFAULTS), keep)); save(); syncInputs(); renderMat(); renderPanes(); schedule();
 });
 
@@ -579,7 +583,7 @@ function pasteApply(replace){
   const rows = pasteParsed.items.map(i => ({n:i.n, h:cmStr(i.h), w:cmStr(i.w), q:String(i.q), bead:false}));
   if (replace){
     state.panes = rows;
-    if (pasteName){ state.name = pasteName; state.client = pasteMeta.client || ''; state.address = pasteMeta.address || ''; }
+    if (pasteName){ state.name = pasteName; state.client = pasteMeta.client || ''; state.clientPhone = pasteMeta.phone || ''; state.address = pasteMeta.address || ''; state.note = pasteMeta.note || ''; }
   } else state.panes = state.panes.filter(p => num(p.h) || num(p.w)).concat(rows);
   save(); syncInputs(); renderPanes(); schedule();
   objNote(replace ? `Список стёкол заменён${pasteName ? ' · ' + pasteName : ''}. Не забудьте сохранить объект.` : 'Стёкла из заявки добавлены к списку.');
@@ -590,14 +594,14 @@ $('pasteText').addEventListener('input', pastePreview);
 $('pasteReplace').addEventListener('click', () => pasteApply(true));
 $('pasteAppend').addEventListener('click', () => pasteApply(false));
 $('pasteClose').addEventListener('click', () => { $('pasteBox').hidden = true; });
-// ссылка из таблицы заявок: ...#sizes=<текст>&c=<заказчик>&a=<адрес>  (данные после # не уходят на сервер)
+// ссылка из таблицы заявок: ...#sizes=<текст>&c=<заказчик>&p=<телефон>&a=<адрес>&n=<примечание>  (данные после # не уходят на сервер)
 function hashSizes(){
   const h = location.hash;
   if (!/^#sizes=/.test(h)) return;
   const prm = new URLSearchParams(h.slice(1));
   history.replaceState(null, '', location.pathname + location.search);
-  const c = (prm.get('c') || '').trim(), a = (prm.get('a') || '').trim();
-  pasteShow(prm.get('sizes') || '', prm.get('o') || [c, a].filter(Boolean).join(', ') || 'Заявка', {client:c, address:a});
+  const g = k => (prm.get(k) || '').trim(), c = g('c'), a = g('a');
+  pasteShow(prm.get('sizes') || '', g('o') || [c, a].filter(Boolean).join(', ') || 'Заявка', {client:c, address:a, phone:g('p'), note:g('n')});
 }
 
 /* objects */
@@ -1037,7 +1041,7 @@ function printClient(rec, kind){
   if (F.extra) extra.push(['Дополнительные работы', F.extra]);
   if (F.topUp > 0) extra.push(['Доплата до минимальной стоимости заказа', F.topUp]);
   extra.push([F.travel ? 'Выезд мастера' : 'Выезд мастера по городу', F.travel, !F.travel]);
-  const facts = [['Заказчик', state.client], ['Адрес объекта', state.address], ['Материал', F.M.name]].filter(r => (r[1]||'').trim());
+  const facts = [['Исполнитель', [state.company, state.req].filter(Boolean).join(' · ')], ['Заказчик', state.client], ['Телефон заказчика', state.clientPhone], ['Адрес объекта', state.address], ['Примечание', state.note], ['Материал', F.M.name]].filter(r => (r[1]||'').trim());
   const own = F.sell <= 0;
   const breakdown = [[`Работа по оклейке · ${fmt(F.bill,2)} м² × ${fmt(F.workP)} ₽`, F.workRev]];
   breakdown.push(own ? ['Материал предоставлен заказчиком', null] : [`Материал · ${fmt(F.bill,2)} м² × ${fmt(F.sell)} ₽`, F.matRev]);
@@ -1165,8 +1169,9 @@ function printCut(){
   const head = `${docHead('Раскрой')}
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:20px;margin:10px 0 8px">
       <h2 style="margin:0">Задание мастеру: раскрой плёнки${state.name ? ' · ' + esc(state.name) : ''}</h2>
-      <div class="sm" style="font-size:8.5pt;color:#5E656B">${esc(F.M.name)} · ширина ${fmt(Wcm)} см · расход ${fmt(L.total/100,2)} м · ${L.placed.length} ${plural(L.placed.length,'кусок','куска','кусков')}${state.address ? ' · ' + esc(state.address) : ''}</div>
+      <div class="sm" style="font-size:8.5pt;color:#5E656B">${esc(F.M.name)} · ширина ${fmt(Wcm)} см · расход ${fmt(L.total/100,2)} м · ${L.placed.length} ${plural(L.placed.length,'кусок','куска','кусков')}</div>
     </div>
+    ${[state.client, state.clientPhone, state.address, state.note].some(v => (v||'').trim()) ? `<div class="sm" style="font-size:9pt;margin:0 0 8px">${[state.client, state.clientPhone, state.address].filter(v => (v||'').trim()).map(esc).join(' · ')}${(state.note||'').trim() ? '<br>Примечание: ' + esc(state.note) : ''}</div>` : ''}
     ${marginBox(F)}`;
   const html = `<div class="doc">${masterScheme(L, Wcm, head)}
     <div class="ppage">
