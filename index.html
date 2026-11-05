@@ -537,7 +537,8 @@ function parseSizes(text){
   const UNIT = '(мм|mm|см|cm|м|m)?';
   const N = '(\\d+(?:[.,]\\d+)?)';
   const SEP = '\\s*(?:x|х|×|\\*|на|по)\\s*';
-  const re = new RegExp(N + '\\s*' + UNIT + SEP + N + '(?!\\d)\\s*' + UNIT + '(?![a-wyzа-фц-яё])', 'gi');
+  // разделитель: х × * на по — или дефис вплотную между числами (35-69)
+  const re = new RegExp(N + '(?:[-–](?=\\d)|\\s*' + UNIT + SEP + ')' + N + '(?!\\d)\\s*' + UNIT + '(?![a-wyzа-фц-яё])', 'gi');
   const QTY_AFTER = /^[^0-9]*?(\d{1,3})\s*(?:шт|штук|pcs|ед|окн|стек|створ|раз)/i;
   const QTY_DASH = /^\s*(?:[—–\-=:,]|x|х|×|\*)\s*(\d{1,3})(?![\d.,]*\s*(?:x|х|×|\*|на|мм|mm|см|cm|м|m)(?![а-яёa-z]))(?!\d)/i;
   const QTY_BEFORE = /(\d{1,3})\s*(?:шт|штук|окн|стекл|створ)[а-яё.]*[^0-9]*$/i;
@@ -577,7 +578,11 @@ function parseSizes(text){
       let n = '';
       const par = (after + ' ' + before).match(/\(([^)]{1,40})\)/);
       if (par) n = par[1].trim();
-      else {
+      if (!n){
+        const tail = afterNoUnit.replace(/^[\s—–\-=:,x×х*]*\d{1,3}\s*(?:шт|штук|pcs|ед|окн|стек|створ)?[а-яё.]*/i, '').replace(/^[\s,.;:—–\-]+/, '').trim();
+        if (/[а-яa-z]{3,}/i.test(tail)) n = tail.slice(0, 30);
+      }
+      if (!n){
         const lead = before.replace(QTY_BEFORE, '').replace(/[—–\-=:,.]+\s*$/,'').replace(/^[\s—–\-•*·.,]+/,'').trim();
         if (/[а-яa-z]{3,}/i.test(lead) && !/^(пример|размер|итого)/i.test(lead)) n = lead.slice(0, 30);
       }
