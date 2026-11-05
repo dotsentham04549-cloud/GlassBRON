@@ -64,7 +64,17 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);-w
 .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px 14px}
 .fields.wide{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
 label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted)}
-input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%;min-width:0}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%;min-width:0}
+textarea{font-family:var(--mono);font-size:15px;resize:vertical;line-height:1.45}
+textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pv{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+.pv th{font-family:var(--cond);font-weight:600;font-size:12px;color:var(--muted);text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.pv td{padding:5px 6px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+.pv td.nm{font-family:var(--sans)}
+.pv tr.w td{color:var(--warn)}
+.pv-bad{margin:10px 0 0;padding:8px 10px;border-radius:4px;background:var(--warn-soft);color:var(--warn);font-size:13px}
+.pv-bad div{font-family:var(--mono);white-space:pre-wrap}
+button:disabled{opacity:.45;cursor:default}
 input[inputmode]{font-family:var(--mono);font-size:15px}
 input:focus-visible,button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input[type=checkbox],input[type=radio]{width:18px;height:18px;padding:0;accent-color:var(--accent)}
@@ -257,7 +267,20 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
           </div>
           <div class="btns">
             <button class="primary" id="add">Добавить стекло</button>
+            <button id="pasteOpen">Вставить из заявки</button>
             <button id="reset">Сбросить к стандартным</button>
+          </div>
+          <div id="pasteBox" hidden>
+            <label class="f" style="margin-top:14px">Размеры из заявки — как написал клиент
+              <textarea id="pasteText" rows="5" placeholder="1150 × 1380 — 4 шт&#10;560 × 1380 — 2 шт"></textarea>
+            </label>
+            <p class="note">Ширина × высота, каждое стекло с новой строки. Понимает мм, см и метры, «х», «*», «на», «— 2 шт».</p>
+            <div id="pastePreview"></div>
+            <div class="btns">
+              <button class="primary" id="pasteReplace" disabled>Заменить список</button>
+              <button id="pasteAppend" disabled>Добавить к списку</button>
+              <button class="x" id="pasteClose">Закрыть</button>
+            </div>
           </div>
         </section>
 
@@ -466,6 +489,116 @@ $('reset').addEventListener('click', () => {
   const keep = {company:state.company, phone:state.phone, site:state.site, validDays:state.validDays, materials:clone(state.materials)};
   state = ensureMaterials(Object.assign(clone(DEFAULTS), keep)); save(); syncInputs(); renderMat(); renderPanes(); schedule();
 });
+
+/* ---------- вставка размеров из заявки (Google Форма) ---------- */
+/* Parser for free-form glass sizes written by clients.
+   Returns {items:[{n,w,h,q,unit,warn}], bad:[lines]} with w/h in cm. Width × height order. */
+function parseSizes(text){
+  const UNIT = '(мм|mm|см|cm|м|m)?';
+  const N = '(\\d+(?:[.,]\\d+)?)';
+  const SEP = '\\s*(?:x|х|×|\\*|на|по)\\s*';
+  const re = new RegExp(N + '\\s*' + UNIT + SEP + N + '(?!\\d)\\s*' + UNIT + '(?![a-wyzа-фц-яё])', 'gi');
+  const QTY_AFTER = /^[^0-9]*?(\d{1,3})\s*(?:шт|штук|pcs|ед|окн|стек|створ|раз)/i;
+  const QTY_DASH = /^\s*(?:[—–\-=:,]|x|х|×|\*)\s*(\d{1,3})(?![\d.,]*\s*(?:x|х|×|\*|на|мм|mm|см|cm|м|m)(?![а-яёa-z]))(?!\d)/i;
+  const QTY_BEFORE = /(\d{1,3})\s*(?:шт|штук|окн|стекл|створ)[а-яё.]*[^0-9]*$/i;
+  const f = s => parseFloat(String(s).replace(',', '.'));
+  const lowAll = String(text || '').toLowerCase();
+  const MM = /\d\s*(мм|mm)(?![а-яёa-z])|миллиметр/, CM = /\d\s*(см|cm)(?![а-яёa-z])|сантиметр/;
+  const gUnit = MM.test(lowAll) && !CM.test(lowAll) ? 'mm' : CM.test(lowAll) && !MM.test(lowAll) ? 'cm' : '';
+  const unitOf = u => !u ? '' : /^(мм|mm)$/i.test(u) ? 'mm' : /^(см|cm)$/i.test(u) ? 'cm' : 'm';
+  const items = [], bad = [];
+  const lines = String(text || '').split(/[\n;]+/);
+  for (const raw of lines){
+    const line = raw.trim();
+    if (!line) continue;
+    const ms = [...line.matchAll(re)];
+    if (!ms.length){
+      if (/\d/.test(line) && !/^пример/i.test(line)) bad.push(line);
+      continue;
+    }
+    ms.forEach((m, i) => {
+      const start = m.index, end = m.index + m[0].length;
+      const prevEnd = i ? ms[i-1].index + ms[i-1][0].length : 0;
+      const nextStart = i < ms.length - 1 ? ms[i+1].index : line.length;
+      const after = line.slice(end, nextStart), before = line.slice(prevEnd, start);
+      let a = f(m[1]), b = f(m[3]);
+      let unit = unitOf(m[4]) || unitOf(m[2]);
+      if (!unit){ const u = after.match(/^\s*(мм|mm|см|cm)(?![а-яёa-z])/i); if (u) unit = unitOf(u[1]); }
+      if (!unit) unit = gUnit;
+      if (!unit){
+        const mx = Math.max(a, b);
+        unit = mx < 4 ? 'm' : mx > 300 ? 'mm' : 'cm';
+      }
+      const k = unit === 'mm' ? 0.1 : unit === 'm' ? 100 : 1;
+      const w = Math.round(a * k * 10) / 10, h = Math.round(b * k * 10) / 10;
+      let q = 1, qm;
+      const afterNoUnit = after.replace(/^\s*(мм|mm|см|cm|м|m)(?![а-яёa-z])\.?/i, '');
+      if ((qm = afterNoUnit.match(QTY_DASH)) || (qm = afterNoUnit.match(QTY_AFTER)) || (qm = before.match(QTY_BEFORE))) q = parseInt(qm[1], 10) || 1;
+      let n = '';
+      const par = (after + ' ' + before).match(/\(([^)]{1,40})\)/);
+      if (par) n = par[1].trim();
+      else {
+        const lead = before.replace(QTY_BEFORE, '').replace(/[—–\-=:,.]+\s*$/,'').replace(/^[\s—–\-•*·.,]+/,'').trim();
+        if (/[а-яa-z]{3,}/i.test(lead) && !/^(пример|размер|итого)/i.test(lead)) n = lead.slice(0, 30);
+      }
+      const warn = (w < 5 || h < 5 || w > 600 || h > 600) ? 'Проверьте размер' : '';
+      items.push({n, w, h, q, unit, warn});
+    });
+  }
+  return {items, bad};
+}
+
+let pasteParsed = null, pasteName = '', pasteMeta = {};
+const cmStr = v => String(v).replace('.', ',');
+function pastePreview(){
+  const r = pasteParsed = parseSizes($('pasteText').value);
+  const box = $('pastePreview');
+  let html = '';
+  if (r.items.length){
+    html += `<table class="pv"><thead><tr><th>Помещение</th><th>Шир., см</th><th>Выс., см</th><th>Шт.</th><th></th></tr></thead><tbody>` +
+      r.items.map(i => `<tr class="${i.warn ? 'w' : ''}"><td class="nm">${esc(i.n) || '—'}</td><td>${cmStr(i.w)}</td><td>${cmStr(i.h)}</td><td>${i.q}</td><td>${i.warn ? esc(i.warn) : ''}</td></tr>`).join('') +
+      `</tbody></table>`;
+    const n = r.items.reduce((s,i) => s + i.q, 0);
+    html += `<p class="note">Распознано: <b>${r.items.length}</b> ${plural(r.items.length,'размер','размера','размеров')}, всего ${n} ${plural(n,'стекло','стекла','стёкол')}. Проверьте и нажмите «Заменить список».</p>`;
+  } else if ($('pasteText').value.trim()){
+    html += `<p class="note">Не нашёл ни одного размера вида «ширина × высота».</p>`;
+  }
+  if (r.bad.length) html += `<div class="pv-bad">Не понял — внесите вручную:${r.bad.map(b => `<div>${esc(b)}</div>`).join('')}</div>`;
+  box.innerHTML = html;
+  $('pasteReplace').disabled = $('pasteAppend').disabled = !r.items.length;
+}
+function pasteShow(text, name, meta){
+  $('pasteBox').hidden = false;
+  if (text !== undefined) $('pasteText').value = text;
+  pasteName = name || ''; pasteMeta = meta || {};
+  pastePreview();
+  $('pasteBox').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function pasteApply(replace){
+  if (!pasteParsed || !pasteParsed.items.length) return;
+  const rows = pasteParsed.items.map(i => ({n:i.n, h:cmStr(i.h), w:cmStr(i.w), q:String(i.q), bead:false}));
+  if (replace){
+    state.panes = rows;
+    if (pasteName){ state.name = pasteName; state.client = pasteMeta.client || ''; state.address = pasteMeta.address || ''; }
+  } else state.panes = state.panes.filter(p => num(p.h) || num(p.w)).concat(rows);
+  save(); syncInputs(); renderPanes(); schedule();
+  objNote(replace ? `Список стёкол заменён${pasteName ? ' · ' + pasteName : ''}. Не забудьте сохранить объект.` : 'Стёкла из заявки добавлены к списку.');
+  $('pasteBox').hidden = true; $('pasteText').value = ''; pasteName = ''; pasteMeta = {}; pasteParsed = null; $('pastePreview').innerHTML = '';
+}
+$('pasteOpen').addEventListener('click', () => { pasteShow(); $('pasteText').focus(); });
+$('pasteText').addEventListener('input', pastePreview);
+$('pasteReplace').addEventListener('click', () => pasteApply(true));
+$('pasteAppend').addEventListener('click', () => pasteApply(false));
+$('pasteClose').addEventListener('click', () => { $('pasteBox').hidden = true; });
+// ссылка из таблицы заявок: ...#sizes=<текст>&c=<заказчик>&a=<адрес>  (данные после # не уходят на сервер)
+function hashSizes(){
+  const h = location.hash;
+  if (!/^#sizes=/.test(h)) return;
+  const prm = new URLSearchParams(h.slice(1));
+  history.replaceState(null, '', location.pathname + location.search);
+  const c = (prm.get('c') || '').trim(), a = (prm.get('a') || '').trim();
+  pasteShow(prm.get('sizes') || '', prm.get('o') || [c, a].filter(Boolean).join(', ') || 'Заявка', {client:c, address:a});
+}
 
 /* objects */
 function renderObjList(sel){
@@ -1125,6 +1258,8 @@ hashImport();
 window.addEventListener('hashchange', hashImport);
 renderPanes();
 compute();
+hashSizes();
+window.addEventListener('hashchange', hashSizes);
 </script>
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
