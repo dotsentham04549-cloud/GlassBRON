@@ -1,5 +1,5 @@
 // Offline cache for the calculator. Bump VERSION after uploading a new index.html.
-const VERSION = 'film-calc-v13';
+const VERSION = 'film-calc-v14';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -13,7 +13,8 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   // App page: network first (to pick up updates), cache as fallback when offline.
   if (req.mode === 'navigate'){
-    e.respondWith(fetch(req).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); return r; })
+    // cache:'no-cache' — не брать страницу из HTTP-кэша браузера (GitHub Pages кэширует на 10 минут)
+    e.respondWith(fetch(req.url, {cache:'no-cache', credentials:'same-origin'}).then(r => { const copy = r.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); return r; })
       .catch(() => caches.match('./index.html')));
     return;
   }
