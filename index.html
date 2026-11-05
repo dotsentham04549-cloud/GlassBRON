@@ -168,6 +168,11 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
   #printArea{display:block;color:#14191E;font:10pt/1.45 var(--sans)}
 }
 .doc{margin:0 auto}
+.pdfroot{--ink:#14191E;--muted:#5E656B;--line:#D9D5CC;--line-strong:#B9B3A7;--accent:#1E3A4C;--warn:#9B4A1C;--warn-soft:#F5E3D6;--field:#FAF9F6;--surface:#FFFFFF;position:fixed;left:-10000px;top:0;width:182mm;background:#fff;color:#14191E;font:10pt/1.45 var(--sans)}
+#pdfBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:calc(100% - 32px);padding:10px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+#pdfBar[hidden]{display:none}
+#pdfBar span{font-size:14px;margin-right:4px}
+@media print{#pdfBar{display:none!important}}
 .doc .lpage,.doc .lpage *{page:land}
 .doc .lpage{width:273mm}
 .doc .lpage + .lpage{break-before:page}
@@ -234,6 +239,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
     <div class="brand"><b id="brandName">ALL IN</b>Бронирование стёкол</div>
     <div class="actions">
       <button id="printClient">Предварительный расчёт</button>
+      <button id="pdfClient" title="Предварительный расчёт файлом PDF — отправить клиенту">PDF расчёта</button>
       <button id="printFinal" class="solid">Заказ-наряд</button>
       <button id="printCut">Раскрой для мастера</button>
     </div>
@@ -418,6 +424,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
 </div>
 
 <div id="printArea"></div>
+<div id="pdfBar" hidden role="status"><span id="pdfMsg"></span><button class="primary" id="pdfShare">Отправить</button><button id="pdfSave">Скачать</button><button class="x" id="pdfX" aria-label="Закрыть">×</button></div>
 
 <script>
 const KEY = 'film-calc-v2', OLDKEY = 'film-calc-v1', OBJS = 'film-calc-objects-v1';
@@ -1264,11 +1271,59 @@ function printCut(){
   doPrint(html, `Раскрой — ${state.name || 'плёнка'}`);
 }
 function doPrint(html, title){
+  if (pdfMode){ pdfMode = false; makePdf(html, title); return; }
   $('printArea').innerHTML = html;
   const t = document.title; document.title = title;
   setTimeout(() => { window.print(); document.title = t; }, 150);
 }
 $('printClient').addEventListener('click', () => { const rec = newOrder('prelim'); printClient(rec, 'prelim'); });
+$('pdfClient').addEventListener('click', () => { pdfMode = true; const rec = newOrder('prelim'); printClient(rec, 'prelim'); });
+
+/* ---------- PDF для отправки клиенту ---------- */
+let pdfMode = false, pdfFile = null, pdfLib = null;
+function loadPdfLib(){
+  if (window.html2pdf) return Promise.resolve();
+  return pdfLib || (pdfLib = new Promise((ok, fail) => {
+    const sc = document.createElement('script'); sc.src = 'html2pdf.bundle.min.js';
+    sc.onload = ok; sc.onerror = () => { pdfLib = null; fail(new Error('load')); }; document.head.appendChild(sc);
+  }));
+}
+function pdfBar(msg, ready){
+  $('pdfBar').hidden = false; $('pdfMsg').textContent = msg;
+  $('pdfShare').hidden = $('pdfSave').hidden = !ready;
+  $('pdfShare').hidden = !ready || !(navigator.canShare && pdfFile && navigator.canShare({files:[pdfFile]}));
+}
+async function makePdf(html, title){
+  pdfFile = null; pdfBar('Готовлю PDF…', false);
+  const box = document.createElement('div'); box.className = 'pdfroot'; box.innerHTML = html; document.body.appendChild(box);
+  try{
+    await loadPdfLib();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const name = (title || 'Расчёт').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90) + '.pdf';
+    const blob = await html2pdf().set({
+      margin:[12, 14, 14, 14], filename:name,
+      image:{type:'jpeg', quality:0.95},
+      html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm', format:'a4', orientation:'portrait'},
+      pagebreak:{mode:['css', 'legacy'], avoid:['tr', '.grand', '.why', '.sign', '.totals', '.facts']}
+    }).from(box.firstElementChild || box).outputPdf('blob');
+    pdfFile = new File([blob], name, {type:'application/pdf'});
+    pdfBar(`PDF готов · ${Math.max(1, Math.round(blob.size / 1024))} КБ`, true);
+  }catch(e){
+    pdfBar(e && e.message === 'load' ? 'Не удалось загрузить модуль PDF — нужен интернет.' : 'Не получилось собрать PDF. Используйте «Предварительный расчёт» → Сохранить как PDF.', false);
+  }finally{ box.remove(); }
+}
+$('pdfShare').addEventListener('click', async () => {
+  if (!pdfFile) return;
+  try{ await navigator.share({files:[pdfFile], title:pdfFile.name.replace(/\.pdf$/, '')}); $('pdfBar').hidden = true; }
+  catch(e){ if (!(e && e.name === 'AbortError')) $('pdfSave').click(); }
+});
+$('pdfSave').addEventListener('click', () => {
+  if (!pdfFile) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(pdfFile); a.download = pdfFile.name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+});
+$('pdfX').addEventListener('click', () => { $('pdfBar').hidden = true; });
 $('printFinal').addEventListener('click', () => { if (!confirm('Оформить окончательный заказ-наряд? Используйте его после замера, когда размеры и цена согласованы с клиентом.')) return; const rec = newOrder('final'); printClient(rec, 'final'); });
 $('printCut').addEventListener('click', printCut);
 
