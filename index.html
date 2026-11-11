@@ -363,7 +363,10 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <label class="f">Доп. работы, ₽<input data-k="extra" inputmode="decimal"></label>
             <label class="f">Округление итога<select data-s="roundMode"><option value="none">Не округлять</option><option value="down">Вниз, в пользу клиента</option><option value="nearest">До ближайшего</option></select></label>
             <label class="f">Шаг округления<select data-s="roundStep"><option value="10">10 ₽</option><option value="50">50 ₽</option><option value="100">100 ₽</option></select></label>
+            <label class="f">Скидка<input data-k="discountValue" inputmode="decimal" placeholder="0"></label>
+            <label class="f">Вид скидки<select data-s="discountMode"><option value="percent">В процентах, %</option><option value="rub">В рублях, ₽</option></select></label>
           </div>
+          <p class="note">Скидка применяется к итогу после округления, включая выезд, и уменьшает прибыль компании. Оплата мастеру за работу, штапики и дорогу не меняется. Скидка считается до целого рубля, максимум — вся сумма заказа.</p>
           <p class="note">«Стандарт» — оклейка по видимой части стекла, штапики по желанию за доплату. «Защита» — все стёкла с заводкой под штапик, доплата за штапики не берётся, она уже в цене.</p>
           <p class="note">Клиенту цена складывается из работы и материала (цена материала задаётся в блоке «Материал»). Стекло меньше минимальной площади считается как минимальная площадь — и для клиента, и для оплаты мастеру.</p>
         </section>
@@ -439,9 +442,16 @@ const DEFAULTS = {
   company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', formUrl:'', formMsg:'Здравствуйте! Это студия ALL IN. Заполните, пожалуйста, короткую анкету — по ней подготовим предварительный расчёт бронирования стёкол:', workPrice:'1200', workProt:'1700', tariff:'std', why:'Работаем официально: договор, заказ-наряд, акт, оплата по счёту\nПисьменная гарантия на работу\nБронирующая плёнка 210 мкм — толщина указана в документах\nТариф «Защита»: плёнка заводится под штапик и удерживает стекло в раме при ударной волне\nРаботаем бригадой мастеров — объект закрываем быстро и целиком\nСтудия в Воронеже, более 10 лет работы', matId:'m1',
   materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
   client:'', clientPhone:'', address:'', note:'', withScheme:false, splitLines:false,
+  discountMode:'percent', discountValue:'0',
   name:'', panes:HOUSE
 };
-const OBJ_FIELDS = ['name','client','clientPhone','address','note','panes','matId','tariff'];
+const OBJ_FIELDS = ['name','client','clientPhone','address','note','panes','matId','tariff','discountMode','discountValue'];
+function restoreObject(o){
+  OBJ_FIELDS.forEach(k => { if (o[k] !== undefined) state[k] = clone(o[k]); });
+  // Older objects have no discount; never carry a different client's discount over.
+  state.discountMode = o.discountMode || DEFAULTS.discountMode;
+  state.discountValue = o.discountValue ?? DEFAULTS.discountValue;
+}
 const OWN_MAT = {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'};
 function ensureMaterials(st){
   if (!Array.isArray(st.materials) || !st.materials.length){
@@ -635,6 +645,7 @@ function pasteApply(replace){
   const rows = pasteParsed.items.map(i => ({n:i.n, h:cmStr(i.h), w:cmStr(i.w), q:String(i.q), bead:false}));
   if (replace){
     state.panes = rows;
+    state.discountMode = DEFAULTS.discountMode; state.discountValue = DEFAULTS.discountValue;
     if (pasteName){ state.name = pasteName; state.client = pasteMeta.client || ''; state.clientPhone = pasteMeta.phone || ''; state.address = pasteMeta.address || ''; state.note = pasteMeta.note || ''; }
   } else state.panes = state.panes.filter(p => num(p.h) || num(p.w)).concat(rows);
   save(); syncInputs(); renderPanes(); schedule();
@@ -701,7 +712,7 @@ $('saveObj').addEventListener('click', () => {
 $('loadObj').addEventListener('click', () => {
   const name = $('objList').value, objs = loadObjs() || {};
   if (!name || !objs[name]) return;
-  OBJ_FIELDS.forEach(k => { if (objs[name][k] !== undefined) state[k] = clone(objs[name][k]); });
+  restoreObject(objs[name]);
   state.name = name; ensureMaterials(state); save(); syncInputs(); renderMat(); renderPanes(); schedule(); objNote(`Открыт: ${name}`);
 });
 $('delObj').addEventListener('click', () => {
@@ -866,9 +877,17 @@ function figures(){
   else if (zone === 'suburb'){ travel = num(state.suburbFee); travelNote = 'пригород'; }
   else { const km = num(state.km); travel = km * 2 * num(state.perKm); travelNote = `${fmt(km)} км × 2 × ${fmt(num(state.perKm))} ₽`; }
   const masterTravel = zone === 'city' ? 0 : travel * num(state.masterPct) / 100;
+  // Keep work, minimum order and travel unchanged: they determine the master's pay.
+  const rounded = rounding(work + travel);
   return {M, prot, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient, laborBead, beadBill,
     glass, bill, smallCount, beads, count, rows, beadRev, areaRev, raw, work, topUp, zone, travel, travelNote, masterTravel,
-    exact: work + travel, ...rounding(work + travel)};
+    exact: work + travel, ...rounded, ...discounted(rounded.revenue)};
+}
+function discounted(total){
+  const beforeDiscount = Math.max(0, total), value = Math.max(0, num(state.discountValue));
+  const percent = Math.min(100, value), isRub = state.discountMode === 'rub';
+  const discount = Math.min(beforeDiscount, Math.round(isRub ? value : beforeDiscount * percent / 100));
+  return {beforeDiscount, discount, discountLabel: isRub ? 'Скидка' : `Скидка ${fmt(percent,2)}%`, revenue: beforeDiscount - discount};
 }
 function rounding(v){
   const step = num(state.roundStep) || 100, mode = state.roundMode || 'none';
@@ -962,6 +981,7 @@ function renderSummary(F, L, seams, Wcm){
       ${F.masterTravel ? `<div class="ind"><span>дорога</span><span>${rub(F.masterTravel)}</span></div>` : ''}
       ${Math.abs(F.roundDiff) >= 0.5 ? `<div><span>Округление</span><span>${F.roundDiff > 0 ? '+' : '−'}${rub(Math.abs(F.roundDiff))}</span></div>` : ''}
       <div><span>Выезд клиенту</span><span>${F.travel ? rub(F.travel) : '0 ₽'} · ${F.travelNote}</span></div>
+      ${F.discount > 0 ? `<div><span>До скидки</span><span>${rub(F.beforeDiscount)}</span></div><div><span>${F.discountLabel}</span><span>−${rub(F.discount)}</span></div>` : ''}
       <div><span>Наценка</span><span>${pend('×' + fmt(F.revenue / Math.max(cost,1),1))}</span></div>
       <div><span>Остаток рулона</span><span>${pend(lenM <= F.Lm ? fmt(F.Lm - lenM,2) + ' м' : '—')}</span></div>
     </div>
@@ -1128,6 +1148,8 @@ function printClient(rec, kind){
   if (F.extra) extra.push(['Дополнительные работы', F.extra]);
   if (F.topUp > 0) extra.push(['Доплата до минимальной стоимости заказа', F.topUp]);
   extra.push([F.travel ? 'Выезд мастера' : 'Выезд мастера по городу', F.travel, !F.travel]);
+  if (Math.abs(F.roundDiff) >= 0.5) extra.push(['Округление', F.roundDiff]);
+  if (F.discount > 0){ extra.push(['Сумма до скидки', F.beforeDiscount]); extra.push([F.discountLabel, -F.discount]); }
   const facts = [['Исполнитель', [state.company, state.req].filter(Boolean).join(' · ')], ['Заказчик', state.client], ['Телефон заказчика', state.clientPhone], ['Адрес объекта', state.address], ['Примечание', state.note], ['Материал', F.M.name]].filter(r => (r[1]||'').trim());
   const own = F.sell <= 0;
   const split = own || !!state.splitLines, perM2 = F.workP + F.sell;
@@ -1366,7 +1388,7 @@ function importData(d, quiet){
   }
   if (d.open && (loadObjs() || {})[d.open]){
     const o = loadObjs()[d.open];
-    OBJ_FIELDS.forEach(k => { if (o[k] !== undefined) state[k] = clone(o[k]); });
+    restoreObject(o);
     state.name = d.open; ensureMaterials(state);
   }
   save(); syncInputs(); renderMat(); renderObjList(state.name); renderPanes(); renderOrders(); compute();
@@ -1440,3 +1462,4 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 </script>
 </body>
 </html>
+
