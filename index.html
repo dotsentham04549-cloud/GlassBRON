@@ -94,6 +94,10 @@ button{font:inherit;font-size:14px;font-weight:500;cursor:pointer;border-radius:
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 button.x{padding:5px 8px;color:var(--faint);border-color:transparent;background:transparent}
 .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+#cloudActions[hidden],#cloudSetup[hidden],#cloudConflicts[hidden]{display:none}
+.cloud-conflict{padding:10px 0;border-top:1px solid var(--line)}
+.cloud-conflict div{margin:8px 0}
+.cloud-conflict span{display:block;margin-bottom:4px;overflow-wrap:anywhere}
 details.card summary{cursor:pointer;list-style:none}
 details.card summary::-webkit-details-marker{display:none}
 details.card summary .kicker{margin:0}
@@ -278,6 +282,22 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <input type="file" id="importFile" accept=".json,application/json" hidden>
           </div>
         </section>
+
+        <details class="card" id="cloudPanel">
+          <summary><h2 class="kicker">Яндекс Диск · синхронизация</h2></summary>
+          <p class="note" id="cloudStatus" role="status" aria-live="polite">Яндекс Диск не подключён.</p>
+          <div id="cloudSetup">
+            <p class="note">Подключите один и тот же Яндекс на телефоне и компьютере. Расчёты, объекты, скидки и документы будут синхронизироваться, пока калькулятор открыт. При первом подключении разные версии сохранятся обе.</p>
+            <div class="fields" style="margin-top:12px">
+              <label class="f">ClientID приложения<input id="cloudClient" autocomplete="off" spellcheck="false" value="35fc3535b9134626af99c98891181719"></label>
+              <label class="f">Токен доступа Яндекса<input id="cloudToken" type="password" autocomplete="off" spellcheck="false" placeholder="Вставьте токен со страницы Яндекса"></label>
+            </div>
+            <div class="btns"><a class="btnlink" id="cloudAuthorize" target="_blank" rel="noopener noreferrer">1. Получить доступ в Яндексе</a><button class="primary" id="cloudConnect">2. Подключить Диск</button></div>
+            <p class="note">На странице Яндекса разрешите доступ, скопируйте токен и вставьте его в поле выше. Токен хранится только в этом браузере, не входит в выгрузки и не передаётся в GitHub. Подключение разрешает сохранять данные калькулятора в папке приложения на вашем Диске.</p>
+          </div>
+          <div id="cloudActions" class="btns" hidden><button class="primary" id="cloudNow">Синхронизировать сейчас</button><button id="cloudDisconnect">Отключить на этом устройстве</button></div>
+          <div id="cloudConflicts" class="warn" hidden></div>
+        </details>
 
         <section class="card">
           <h2 class="kicker">Стёкла, видимая часть, см</h2>
@@ -476,9 +496,9 @@ function load(){
   try{ const o = JSON.parse(localStorage.getItem(OLDKEY)); if (o){ delete o.panes; return ensureMaterials(Object.assign(clone(DEFAULTS), {materials:undefined, workPrice:undefined}, o, {name:'', panes:clone(HOUSE)})); } }catch(e){}
   return ensureMaterials(clone(DEFAULTS));
 }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); window.bronCloud?.changed(); }catch(e){} }
 function loadObjs(){ try{ return JSON.parse(localStorage.getItem(OBJS)) || null; }catch(e){ return null; } }
-function saveObjs(o){ try{ localStorage.setItem(OBJS, JSON.stringify(o)); }catch(e){} }
+function saveObjs(o){ try{ localStorage.setItem(OBJS, JSON.stringify(o)); window.bronCloud?.changed(); }catch(e){} }
 let state = load();
 if (!state.phone) state.phone = DEFAULTS.phone;
 if (state.workPrice === '850') state.workPrice = DEFAULTS.workPrice;   // старая цена 850+800 → новая 1200+800
@@ -1071,7 +1091,7 @@ function docHead(title, fixed){
   const no = fixed ? fixed.no : makeNo(d);
   const contacts = [state.phone, state.site].filter(Boolean).map(esc).join(' · ');
   return `<div class="dhead"><div><div class="co">${esc(state.company || 'ALL IN')}</div><div class="co-sub">${contacts || 'Бронирование стёкол'}</div></div>
-    <div class="meta"><b>${title} № ${no}</b>${date}</div></div>`;
+    <div class="meta"><b>${esc(title)} № ${esc(no)}</b>${date}</div></div>`;
 }
 // Print scheme: the roll runs top-to-bottom, its width spans the page width,
 // one full A4 page per strip — the sheet is used as fully as possible.
@@ -1191,7 +1211,7 @@ function printClient(rec, kind){
 const ORD = 'film-calc-orders-v1';
 const SNAP_SKIP = [];
 function loadOrders(){ try{ return JSON.parse(localStorage.getItem(ORD)) || []; }catch(e){ return []; } }
-function saveOrders(a){ try{ localStorage.setItem(ORD, JSON.stringify(a)); }catch(e){} }
+function saveOrders(a){ try{ localStorage.setItem(ORD, JSON.stringify(a)); window.bronCloud?.changed(); }catch(e){} }
 function snapshot(){ const s = clone(state); return s; }
 function newOrder(kind){
   const F = figures(), snap = snapshot(), list = loadOrders(), sig = JSON.stringify(snap);
@@ -1428,7 +1448,28 @@ renderPanes();
 compute();
 hashSizes();
 window.addEventListener('hashchange', hashSizes);
+// Narrow bridge: sync sees calculator data, never browser credentials or unrelated storage.
+window.BronCloudBridge = {
+  defaults:clone(DEFAULTS), objectFields:OBJ_FIELDS.slice(),
+  read:() => ({settings:clone(state),objects:loadObjs() || {},orders:loadOrders()}),
+  hasLocalData:() => !!(localStorage.getItem(KEY) || localStorage.getItem(OBJS) || localStorage.getItem(ORD)),
+  editing:() => ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName),
+  apply:data => {
+    const next = ensureMaterials(Object.assign(clone(DEFAULTS),clone(data.settings)));
+    const writes = [[KEY,JSON.stringify(next)],[OBJS,JSON.stringify(data.objects)],[ORD,JSON.stringify(data.orders)]];
+    const backup = writes.map(([key]) => [key,localStorage.getItem(key)]);
+    // Fail before touching calculator data if a recovery copy cannot be stored.
+    localStorage.setItem('glassbron-before-cloud-apply',JSON.stringify(backup));
+    try{ for (const [key,value] of writes) localStorage.setItem(key,value); }
+    catch(e){ for (const [key,value] of backup){ try{ value === null ? localStorage.removeItem(key) : localStorage.setItem(key,value); }catch(_){} } throw new Error('Не хватает памяти браузера. Сначала выгрузите резервную копию данных.'); }
+    state = next; syncInputs(); renderMat(); renderObjList(state.name); renderPanes(); renderOrders(); compute();
+  }
+};
 </script>
+<script src="cloud-sync-core.js?v=1"></script>
+<script src="cloud-data.js?v=1"></script>
+<script src="yandex-disk.js?v=1"></script>
+<script src="cloud-sync.js?v=1"></script>
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
