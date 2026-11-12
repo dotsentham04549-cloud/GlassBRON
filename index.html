@@ -273,13 +273,21 @@ button.x{box-shadow:none}
   .card{border-radius:13px}.head h1{font-size:28px}
   .brand b{padding:6px 8px;margin-right:7px}
   .panes tr{border-radius:11px;background:var(--field)}
-  .cut{min-width:0;display:block}.cut thead{display:none}.cut tbody{display:grid;gap:12px}
-  .cut tr{display:grid;grid-template-columns:minmax(0,1fr);padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--field);gap:12px}
+  #cutList{overflow:visible;width:100%;min-width:0}
+  table.cut{min-width:0;max-width:100%;width:100%;display:block}
+  .cut thead{display:none}
+  .cut tbody{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;width:100%;min-width:0}
+  .cut tr{display:grid;grid-template-columns:minmax(0,1fr);width:100%;min-width:0;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--field);gap:12px}
   .cut td{display:block;border:0;padding:0;min-width:0}
   .cut td.piece-name{display:flex;align-items:center;font-size:15px}
+  .cut .piece-name>span:last-child{min-width:0;overflow-wrap:anywhere}
+  .cut .piece-number{flex-shrink:0}
   .cut td.piece-sizes{padding:12px;border-radius:9px;background:var(--surface)}
   .cut td.n{font-size:12px;color:var(--muted)}.cut td.n::before{content:attr(data-label) ' · ';font-family:var(--sans)}
+  #cutList .glass-size,#cutList .cut-size{white-space:normal;overflow-wrap:anywhere}
   .glass-size{font-size:12px}.cut-size{font-size:14px}
+  .cut tr.grp td{border:0}
+  .piece-position span{min-width:0;overflow-wrap:anywhere}
   .piece-position{display:flex!important;flex-wrap:wrap;gap:4px 16px}
   .bottom-nav button{font-size:10px}
 }
