@@ -227,6 +227,64 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
   .orders td.act button{margin:0;min-height:44px}
 }
 
+
+/* A quieter visual language; printing keeps its own high-contrast palette. */
+@media screen{
+  :root{--bg:#F3F4EF;--surface:#FFFFFF;--field:#F7F9F6;--ink:#203733;--muted:#64766F;--faint:#87968E;--line:#E1E9E3;--line-strong:#CCD9D0;--accent:#275E53;--accent-ink:#FFFFFF;--film:#DDEDE6;--film-edge:#79A895}
+  :root[data-theme="dark"]{--bg:#111C1A;--surface:#192823;--field:#20312A;--ink:#EAF0E9;--muted:#A5B8AD;--faint:#829A8C;--line:#2B3E34;--line-strong:#3F5749;--accent:#A6D2B9;--accent-ink:#152A20;--film:#294A3D;--film-edge:#75A68C}
+}
+@media screen and (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#111C1A;--surface:#192823;--field:#20312A;--ink:#EAF0E9;--muted:#A5B8AD;--faint:#829A8C;--line:#2B3E34;--line-strong:#3F5749;--accent:#A6D2B9;--accent-ink:#152A20;--film:#294A3D;--film-edge:#75A68C}
+}
+.topbar{background:var(--surface);color:var(--ink);border-bottom:1px solid var(--line)}
+.topbar .brand{font-family:var(--sans);text-transform:none;letter-spacing:0;font-weight:500}
+.brand b{display:inline-block;padding:7px 10px;margin-right:10px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;letter-spacing:.06em}
+.topbar button{color:var(--ink);border-color:var(--line);background:var(--field)}
+.card{border-radius:16px;box-shadow:0 3px 16px #102B2010}
+.head h1{font-size:clamp(27px,3.4vw,34px);letter-spacing:-.025em}
+.head p{line-height:1.6}
+.kicker{font-family:var(--sans);font-size:15px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);gap:14px}
+input,select,textarea{border-radius:9px;padding:10px 11px}
+button,a.btnlink{border-radius:9px;transition:background-color .15s,border-color .15s}
+button.primary{box-shadow:0 3px 8px #142C2014}
+button.x{box-shadow:none}
+.tariffs span{border-radius:11px;padding:13px 12px}
+.tariffs input:checked+span{background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.zones label{border-radius:9px}
+.kpis{border-radius:11px;background:var(--field)}
+.total{font-family:var(--sans);font-weight:600;font-size:clamp(34px,4.6vw,44px);letter-spacing:-.035em;margin-top:5px}
+#result{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 6%,var(--surface)),var(--surface) 60%)}
+.bottom-nav{box-shadow:0 -4px 22px #102B2009}
+.bottom-nav button{border-radius:11px;gap:4px}
+.bottom-nav button[aria-current="page"]{box-shadow:none;background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.calculation-details summary{color:var(--muted)}
+.cut-guide{font-size:14px;color:var(--muted);margin:0 0 18px;max-width:64ch}
+.cut-guide b{font-weight:500;color:var(--ink)}
+.glass-size,.cut-size{display:block;white-space:nowrap}
+.glass-size{font-size:12px;color:var(--muted);margin-bottom:5px;font-family:var(--mono)}
+.cut-size{font-size:15px;color:var(--ink);font-family:var(--mono);font-weight:500}
+.cut .piece-name{font-family:var(--sans);font-weight:500}
+.piece-number{display:inline-flex;justify-content:center;align-items:center;min-width:26px;height:26px;border-radius:8px;background:var(--field);color:var(--accent);font:500 12px var(--mono);margin-right:8px}
+.piece-position span{display:block;color:var(--muted);font:12px/1.8 var(--mono)}
+.cut td{padding:13px 8px;vertical-align:middle}
+.doc .master-sizes .glass-size{font-size:7.5pt;color:#5E656B;margin-bottom:3px}
+.doc .master-sizes .cut-size{font-size:9pt;color:#14191E;font-weight:600}
+@media(max-width:600px){
+  .card{border-radius:13px}.head h1{font-size:28px}
+  .brand b{padding:6px 8px;margin-right:7px}
+  .panes tr{border-radius:11px;background:var(--field)}
+  .cut{min-width:0;display:block}.cut thead{display:none}.cut tbody{display:grid;gap:12px}
+  .cut tr{display:grid;grid-template-columns:minmax(0,1fr);padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--field);gap:12px}
+  .cut td{display:block;border:0;padding:0;min-width:0}
+  .cut td.piece-name{display:flex;align-items:center;font-size:15px}
+  .cut td.piece-sizes{padding:12px;border-radius:9px;background:var(--surface)}
+  .cut td.n{font-size:12px;color:var(--muted)}.cut td.n::before{content:attr(data-label) ' · ';font-family:var(--sans)}
+  .glass-size{font-size:12px}.cut-size{font-size:14px}
+  .piece-position{display:flex!important;flex-wrap:wrap;gap:4px 16px}
+  .bottom-nav button{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){button,a.btnlink{transition:none}}
+
 /* ---------- print ---------- */
 #printArea{display:none}
 @page{size:A4;margin:14mm 14mm 16mm}
@@ -385,7 +443,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
     </section>
     <section id="page-calc" class="app-page" aria-labelledby="pageTitle" hidden>
       <div class="grid"><div class="stack">        <section class="card">
-          <h2 class="kicker">Цена для клиента</h2>
+          <h2 class="kicker">Стоимость и скидка</h2>
           <div class="tariffs" role="radiogroup" aria-label="Тариф">
             <label><input type="radio" name="tariff" value="std"><span><b>Стандарт</b><small id="tStd"></small></span></label>
             <label><input type="radio" name="tariff" value="prot"><span><b>Защита</b><small id="tProt"></small></span></label>
@@ -454,7 +512,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
           <p class="note" id="rollNote"></p>
           <div class="btns" style="margin-top:8px"><button id="matDel" class="x" style="padding-left:0">Удалить этот материал</button></div>
         </section>        <section class="card">
-          <h2 class="kicker">Настройки: запас и оплата мастеру</h2>
+          <h2 class="kicker">Запас и оплата мастеру</h2>
           <div class="fields">
             <label class="f">Запас на сторону, см<input data-k="margin" inputmode="decimal"></label>
             <label class="f">Мастеру за м², ₽<input data-k="labor" inputmode="decimal"></label>
@@ -824,7 +882,7 @@ function expand(W, m){
     const name = (p.n || '').trim() || 'Стекло';
     for (let k = 0; k < q; k++){
       const label = q > 1 ? `${name} ${k+1}` : name;
-      const a = w + 2*m, b = h + 2*m, size = `${fmtS(h)}×${fmtS(w)}`;
+      const a = w + 2*m, b = h + 2*m, size = `${fmtDimension(h)}×${fmtDimension(w)}`;
       if (Math.min(a,b) <= W + 1e-9){ items.push({id:idx++, label, size, across:a, along:b, rot:true, m}); continue; }
       const n1 = Math.ceil(a / W), n2 = Math.ceil(b / W);
       let n, across, along;
@@ -1080,25 +1138,32 @@ function renderSummary(F, L, seams, Wcm){
 }
 
 /* ---------- drawing ---------- */
+// Preserve the entered height × width even when the optimizer rotates a piece.
+// A seam part is its own cutting rectangle, not the size of the whole glass.
+function fmtDimension(n){
+  return n.toLocaleString('ru-RU',{maximumFractionDigits:6});
+}
+function cutSize(p){
+  const h = p.rotated && !p.seam ? p.pw : p.ph;
+  const w = p.rotated && !p.seam ? p.ph : p.pw;
+  return `${fmtDimension(h)} × ${fmtDimension(w)}`;
+}
+function cutSizes(p){
+  return `<span class="glass-size">${p.seam ? 'Всё стекло' : 'Стекло'} · ${esc(p.size)} см</span><strong class="cut-size">${p.seam ? 'Резать часть' : 'Резать'} · ${cutSize(p)} см</strong>`;
+}
 function label(p, x, y, w, h, sc, ff){
   const wPx = w * sc, hPx = h * sc, padPx = 5;
   const vertical = hPx > wPx * 1.15;
   const lenPx = (vertical ? hPx : wPx) - padPx * 2, thickPx = (vertical ? wPx : hPx) - padPx * 2;
-  const l1 = `${p.no}. ${p.label}`, l2 = p.size;
-  let lines = [l1, l2];
-  let fsPx = Math.min(13, lenPx / (Math.max(l1.length, l2.length) * 0.58), thickPx / 2.5);
-  if (fsPx < 8){
-    lines = [`${p.no}.`, p.label, l2];
-    fsPx = Math.min(13, lenPx / (Math.max(p.label.length, l2.length) * 0.58), thickPx / 3.7);
-  }
-  fsPx = Math.max(fsPx, 6);
-  const fs = fsPx / sc, cx = x + w/2, cy = y + h/2, lh = fs * 1.22;
+  const lines = [`${p.no}. ${p.label}`, `${p.seam ? 'Всё стекло' : 'Стекло'}: ${p.size}`, `${p.seam ? 'Резать часть' : 'Резать'}: ${cutSize(p)} см`];
+  const fsPx = Math.max(4, Math.min(13, lenPx / (Math.max(...lines.map(t => t.length)) * 0.6), thickPx / 3.8));
+  const fs = fsPx / sc, cx = x + w/2, cy = y + h/2, lh = fs * 1.24;
   const rot = vertical ? ` transform="rotate(-90 ${cx} ${cy})"` : '';
   const y0 = cy - (lines.length - 1) * lh / 2;
   let t = `<g${rot}>`;
   lines.forEach((ln, i) => {
-    const last = i === lines.length - 1;
-    t += `<text x="${cx}" y="${y0 + i*lh}" dy="0.35em" font-size="${last ? fs*0.88 : fs}" font-weight="${last ? 400 : 600}" text-anchor="middle" fill="${last ? 'var(--muted)' : 'var(--ink)'}" ${last ? 'font-family="IBM Plex Mono, ui-monospace, monospace"' : ff}>${esc(ln)}</text>`;
+    const original = i === 1;
+    t += `<text x="${cx}" y="${y0 + i*lh}" dy="0.35em" font-size="${original ? fs*0.88 : fs}" font-weight="${original ? 400 : 600}" text-anchor="middle" fill="${original ? 'var(--muted)' : 'var(--ink)'}" ${i ? 'font-family="IBM Plex Mono, ui-monospace, monospace"' : ff}>${esc(ln)}</text>`;
   });
   return t + '</g>';
 }
@@ -1129,9 +1194,9 @@ function rollSVG(L, Wcm, from, to, sc, screen, ids){
   return `<svg ${screen ? `width="${vw*sc}" height="${vh*sc}"` : ''} viewBox="${from - pad} ${-pad} ${vw} ${vh}" role="img" aria-label="Раскладка стёкол на рулоне">${g}</svg>`;
 }
 function cutTable(L){
-  return `<table class="cut"><thead><tr><th>№</th><th>Помещение</th><th>Стекло, в×ш</th><th>Кусок, см<br>поперёк × вдоль</th><th>От края</th><th>От начала</th></tr></thead><tbody>
+  return `<p class="cut-guide">Сверху — размер стекла. <b>Ниже — размер для резки, уже с запасом.</b> Все размеры в сантиметрах, высота × ширина.</p><table class="cut"><thead><tr><th>Деталь</th><th>Стекло и размер для резки</th><th>На рулоне, см<br>поперёк × вдоль</th><th>Положение, см</th></tr></thead><tbody>
     ${L.placed.map((p,i) => { const g = i > 0 && Math.abs(L.placed[i-1].y - p.y) > 0.01;
-      return `<tr${g ? ' class="grp"' : ''}><td class="n">${p.no}</td><td>${esc(p.label)}</td><td class="n">${p.size}</td><td class="n">${fmt(p.pw,1)} × ${fmt(p.ph,1)}</td><td class="n">${fmt(p.x,1)}</td><td class="n">${fmt(p.y,1)}</td></tr>`; }).join('')}
+      return `<tr${g ? ' class="grp"' : ''}><td class="piece-name"><span class="piece-number">${p.no}</span><span>${esc(p.label)}</span></td><td class="piece-sizes">${cutSizes(p)}</td><td class="n" data-label="На рулоне, поперёк × вдоль">${fmtS(p.pw)} × ${fmtS(p.ph)}</td><td class="piece-position"><span>От края · ${fmtS(p.x)}</span><span>От начала · ${fmtS(p.y)}</span></td></tr>`; }).join('')}
   </tbody></table>`;
 }
 // Split the roll into printable strips. Prefer breaks no piece crosses; otherwise each
@@ -1365,7 +1430,7 @@ function masterScheme(L, Wcm, head){
 }
 function marginBox(F){
   const m = F.m;
-  return `<div class="prelim" style="margin:0 0 8px">Запас на подрезку: <b>${fmtS(m)} см с каждой стороны</b>. Кусок плёнки больше стекла на <b>${fmtS(2*m)} см</b> по высоте и на <b>${fmtS(2*m)} см</b> по ширине. На схеме пунктир — край куска, заливка — стекло. Лишнее подрезается по месту.</div>`;
+  return `<div class="prelim" style="margin:0 0 8px">Запас на подрезку: <b>${fmtS(m)} см с каждой стороны</b>. Кусок плёнки больше стекла на <b>${fmtS(2*m)} см</b> по высоте и на <b>${fmtS(2*m)} см</b> по ширине. На каждой детали сверху указан размер стекла, ниже — <b>«Резать»: готовый размер плёнки с запасом</b>. Размеры — в сантиметрах, высота × ширина. На схеме пунктир — край куска, заливка — стекло. Для составных стёкол «Резать часть» — размер отдельного куска.</div>`;
 }
 function printCut(){
   if (!lastLayout){ alert('Раскладка ещё считается, попробуйте через пару секунд.'); return; }
@@ -1382,8 +1447,8 @@ function printCut(){
       ${docHead('Раскрой')}
       ${marginBox(F)}
       <div class="sec">Таблица резки · размеры в сантиметрах · «от края» — от верхнего края рулона на схеме</div>
-      <table><thead><tr><th>№</th><th>Помещение</th><th class="r">Стекло, в×ш</th><th class="r">Запас</th><th class="r">Кусок, поперёк × вдоль</th><th class="r">От края</th><th class="r">От начала</th><th>✓</th></tr></thead><tbody>
-        ${L.placed.map(p => `<tr class="avoid"><td class="m">${p.no}</td><td>${esc(p.label)}</td><td class="r m">${p.size}</td><td class="r m">${p.seam ? 'стык' : '+' + fmtS(2*p.m)}</td><td class="r m">${fmt(p.pw,1)} × ${fmt(p.ph,1)}</td><td class="r m">${fmt(p.x,1)}</td><td class="r m">${fmt(p.y,1)}</td><td>☐</td></tr>`).join('')}
+      <table><thead><tr><th>№</th><th>Помещение</th><th>Стекло / резать<br>высота × ширина</th><th class="r">На рулоне<br>поперёк × вдоль</th><th class="r">От края</th><th class="r">От начала</th><th>✓</th></tr></thead><tbody>
+        ${L.placed.map(p => `<tr class="avoid"><td class="m">${p.no}</td><td>${esc(p.label)}</td><td class="master-sizes">${cutSizes(p)}</td><td class="r m">${fmt(p.pw,1)} × ${fmt(p.ph,1)}</td><td class="r m">${fmt(p.x,1)}</td><td class="r m">${fmt(p.y,1)}</td><td>☐</td></tr>`).join('')}
       </tbody></table>
     </div>
   </div>`;
