@@ -50,8 +50,8 @@
     }
     function order(o){
       plain(o);
-      if (!['prelim','final'].includes(o.kind || 'prelim') || !Number.isFinite(Date.parse(o.date)) || !Number.isFinite(o.total) || !Number.isFinite(o.area)) throw new Error('Неверный формат документа.');
-      return {kind:o.kind || 'prelim',no:text(o.no,200),date:text(o.date,100),name:text(o.name ?? '',500),client:text(o.client ?? '',500),total:o.total,area:o.area,snap:settings(o.snap)};
+      if (!['prelim','final','contract','act','care'].includes(o.kind || 'prelim') || !Number.isFinite(Date.parse(o.date)) || !Number.isFinite(o.total) || !Number.isFinite(o.area)) throw new Error('Неверный формат документа.');
+      return {...(o.templateVersion?{templateVersion:text(o.templateVersion,100)}:{}),kind:o.kind || 'prelim',no:text(o.no,200),date:text(o.date,100),name:text(o.name ?? '',500),client:text(o.client ?? '',500),total:o.total,area:o.area,snap:settings(o.snap)};
     }
     function snapshot(data){
       plain(data); plain(data.objects || {});
@@ -71,4 +71,3 @@
   if (typeof module === 'object' && module.exports) module.exports = {createTools};
   else root.BronCloudData = {createTools};
 })(typeof globalThis !== 'undefined' ? globalThis : this);
-

@@ -293,6 +293,22 @@ button.x{box-shadow:none}
 }
 @media(prefers-reduced-motion:reduce){button,a.btnlink{transition:none}}
 
+
+.client-doc-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.client-doc-choice{padding:14px;border:1px solid var(--line);border-radius:12px;min-width:0;background:var(--field)}
+.client-doc-choice h3{margin:0;font-size:16px;font-weight:600}.client-doc-choice .btns{gap:6px}
+.client-doc-choice button{padding:8px 10px;min-height:44px}
+.template-link{display:inline-block;color:var(--accent);font-size:13px;line-height:1.5;margin-top:12px;overflow-wrap:anywhere}
+.legal-preview{margin-top:16px;padding:20px;border:1px solid var(--line);border-radius:12px;min-width:0;overflow-wrap:anywhere}
+.legal-preview h2{font-size:20px}.legal-section h3{font-size:14px;margin:18px 0 6px;break-after:avoid}
+.legal-section p{margin:0 0 8px;line-height:1.5}.legal-table-scroll{overflow-x:auto;max-width:100%}
+.legal-preview table{table-layout:fixed;border-collapse:collapse;width:100%;font-size:12px}.legal-preview td,.legal-preview th{border:1px solid var(--line);padding:6px;overflow-wrap:anywhere}
+.doc.legal-doc .legal-section h3{font-size:10.5pt;color:#14191E}.doc.legal-doc p{font-size:9pt}
+.doc.legal-doc .legal-section{break-inside:auto}.doc.legal-doc .legal-section:last-child{break-inside:avoid}.doc.legal-doc tr{break-inside:avoid}
+.doc.legal-doc .legal-table-scroll{overflow:visible}.doc.legal-doc td{font-size:8.5pt;overflow-wrap:anywhere}
+@media(max-width:920px){.client-doc-actions{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.legal-preview{padding:12px}.legal-section h3{font-size:14px}.client-doc-choice .btns{display:flex;flex-wrap:wrap}}
+
 /* ---------- print ---------- */
 #printArea{display:none}
 @page{size:A4;margin:14mm 14mm 16mm}
@@ -498,6 +514,33 @@ button.x{box-shadow:none}
       <button id="printFinal" class="solid">Заказ-наряд</button>
       <button id="printCut">Раскрой для мастера</button>
     </div><label class="f" style="margin-top:14px"><span>Сумма заказа</span><strong id="documentTotal" class="mono"></strong></label></section>
+
+      <section class="card wide-card" id="clientDocumentPanel">
+        <h2 class="kicker">Договор и памятка клиенту</h2>
+        <p class="note">Данные берутся из текущего заказа. Гарантия на монтаж — 12 месяцев с даты акта. Предпросмотр не сохраняет документ; печать и PDF сохраняют его в историю.</p>
+        <details class="calculation-details" id="documentDetails"><summary>Условия заказа для документов</summary><div class="fields wide" style="margin-top:12px">
+<label class="f">Номер договора (пусто — назначится при сохранении)<input data-k="contractNo"></label>
+<label class="f">Город заключения<input data-k="contractCity"></label>
+<label class="f">Начало работ<input data-k="contractStart" type="date"></label>
+<label class="f">Окончание работ<input data-k="contractEnd" type="date"></label>
+<label class="f">Согласованный аванс, ₽ (0 — без аванса)<input data-k="contractAdvance" inputmode="decimal" placeholder="Укажите сумму или 0"></label>
+<label class="f">Порядок оплаты остатка<textarea data-k="contractPayment" rows="2"></textarea></label>
+<label class="f">Марка, модель и толщина по маркировке рулона<input data-k="contractMaterial" placeholder="Например: SOLARNEX Safety 8 mil — сверьте этикетку"></label>
+<label class="f">Документы и условия на материал<textarea data-k="contractFilmWarranty" rows="2"></textarea></label>
+<label class="f">Срок высыхания и условия<textarea data-k="contractDrying" rows="2"></textarea></label>
+<label class="f">Первая мойка — дата или условие из инструкции<input data-k="contractFirstWash"></label>
+<label class="f">Фактическая дата приёмки<input data-k="contractActDate" type="date"></label>
+<label class="f">Фактически полученная оплата и документ<textarea data-k="contractReceived" rows="2"></textarea></label>
+<label class="f">Замечания в акте и сроки устранения<textarea data-k="contractDefects" rows="2"></textarea></label>
+<label class="f">Особенности объекта и согласования<textarea data-k="contractExtra" rows="2"></textarea></label>
+<label class="f">Лицо, принявшее заказ<input data-k="contractSigner"></label>
+<label class="f">Почта для обращений<input data-k="contractEmail"></label>
+<label class="f">Реквизиты для перевода (если требуется)<textarea data-k="contractBank" rows="2"></textarea></label>
+</div><p class="note">8 mil = 203,2 мкм. В старых материалах калькулятора может быть указано 210 мкм — проверьте этикетку и название в настройках материала. Срок первой мойки уточните отдельно от полного высыхания.</p></details>
+        <div class="client-doc-actions">
+<section class="client-doc-choice"><h3>Договор</h3><div class="btns"><button data-client-doc="contract" data-format="preview">Посмотреть</button><button data-client-doc="contract" data-format="print">Печать</button><button class="primary" data-client-doc="contract" data-format="pdf">PDF</button></div><a class="template-link" href="documents/contract.pdf" download>Скачать пустой шаблон PDF</a></section><section class="client-doc-choice"><h3>Акт приёмки</h3><div class="btns"><button data-client-doc="act" data-format="preview">Посмотреть</button><button data-client-doc="act" data-format="print">Печать</button><button class="primary" data-client-doc="act" data-format="pdf">PDF</button></div><a class="template-link" href="documents/act.pdf" download>Скачать пустой шаблон PDF</a></section><section class="client-doc-choice"><h3>Памятка по уходу</h3><div class="btns"><button data-client-doc="care" data-format="preview">Посмотреть</button><button data-client-doc="care" data-format="print">Печать</button><button class="primary" data-client-doc="care" data-format="pdf">PDF</button></div><a class="template-link" href="documents/care.pdf" download>Скачать пустой шаблон PDF</a></section></div><p id="clientDocumentStatus" class="note" role="status" aria-live="polite"></p>
+        <div id="clientDocumentPreview" hidden><div class="btns"><button id="closeDocumentPreview">Закрыть предпросмотр</button></div><article id="clientDocumentContent" class="legal-preview"></article></div>
+      </section>
           <section class="card wide-card">
       <h2 class="kicker">Сохранённые документы</h2>
       <div class="tscroll" id="orders"></div>
@@ -564,6 +607,7 @@ button.x{box-shadow:none}
 <div id="printArea"></div>
 <div id="pdfBar" hidden role="status"><span id="pdfMsg"></span><button class="primary" id="pdfShare">Отправить</button><button id="pdfSave">Скачать</button><button class="x" id="pdfX" aria-label="Закрыть">×</button></div>
 
+<script src="client-documents.js?v=1"></script>
 <script>
 const KEY = 'film-calc-v2', OLDKEY = 'film-calc-v1', OBJS = 'film-calc-objects-v1';
 const HOUSE = [{n:'Гостиная',h:'140',w:'65',q:'2',bead:false},{n:'Кухня',h:'120',w:'50',q:'1',bead:false},{n:'Ванная',h:'25',w:'35',q:'1',bead:false}];
@@ -575,11 +619,13 @@ const DEFAULTS = {
   company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', formUrl:'', formMsg:'Здравствуйте! Это студия ALL IN. Заполните, пожалуйста, короткую анкету — по ней подготовим предварительный расчёт бронирования стёкол:', workPrice:'1200', workProt:'1700', tariff:'std', why:'Работаем официально: договор, заказ-наряд, акт, оплата по счёту\nПисьменная гарантия на работу\nБронирующая плёнка 210 мкм — толщина указана в документах\nТариф «Защита»: плёнка заводится под штапик и удерживает стекло в раме при ударной волне\nРаботаем бригадой мастеров — объект закрываем быстро и целиком\nСтудия в Воронеже, более 10 лет работы', matId:'m1',
   materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
   client:'', clientPhone:'', address:'', note:'', withScheme:false, splitLines:false,
+  contractNo:"", contractCity:"Воронеж", contractStart:"", contractEnd:"", contractAdvance:"", contractPayment:"Остаток оплачивается после приёмки работ и подписания акта.", contractMaterial:"", contractFilmWarranty:"По документам поставщика на конкретный материал; документы передаются Заказчику.", contractDrying:"Ориентировочно до 60 дней по информации поставщика. Фактический срок зависит от условий; уточняется по инструкции к материалу.", contractFirstWash:"", contractActDate:"", contractReceived:"", contractDefects:"", contractExtra:"", contractSigner:"ИП Козленко Вадим Янович", contractEmail:"ds_allin@mail.ru", contractBank:"",
   discountMode:'percent', discountValue:'0',
   name:'', panes:HOUSE
 };
-const OBJ_FIELDS = ['name','client','clientPhone','address','note','panes','matId','tariff','discountMode','discountValue'];
+const OBJ_FIELDS = ['name','client','clientPhone','address','note','panes','matId','tariff','discountMode','discountValue',"contractNo","contractStart","contractEnd","contractAdvance","contractPayment","contractMaterial","contractFirstWash","contractActDate","contractReceived","contractDefects","contractExtra"];
 function restoreObject(o){
+  state.contractNo = DEFAULTS.contractNo; state.contractStart = DEFAULTS.contractStart; state.contractEnd = DEFAULTS.contractEnd; state.contractAdvance = DEFAULTS.contractAdvance; state.contractPayment = DEFAULTS.contractPayment; state.contractMaterial = DEFAULTS.contractMaterial; state.contractFirstWash = DEFAULTS.contractFirstWash; state.contractActDate = DEFAULTS.contractActDate; state.contractReceived = DEFAULTS.contractReceived; state.contractDefects = DEFAULTS.contractDefects; state.contractExtra = DEFAULTS.contractExtra; 
   OBJ_FIELDS.forEach(k => { if (o[k] !== undefined) state[k] = clone(o[k]); });
   // Older objects have no discount; never carry a different client's discount over.
   state.discountMode = o.discountMode || DEFAULTS.discountMode;
@@ -1351,6 +1397,45 @@ function printClient(rec, kind){
   </div></div>`;
   doPrint(html, `${final ? 'Заказ-наряд' : 'Предварительный расчёт'} ${rec ? rec.no : ''} — ${state.name || 'бронирование стёкол'}`);
 }
+
+/* ---------- client documents ---------- */
+const LEGAL_KINDS = ['contract','act','care'];
+function documentName(kind){ return LEGAL_KINDS.includes(kind) ? BronClientDocuments.titles[kind] : kind === 'final' ? 'Заказ-наряд' : 'Предв. расчёт'; }
+function legalModel(kind, rec){
+  return BronClientDocuments.model(kind,{settings:state,figures:figures(),date:new Date(rec?.date || Date.now()).toLocaleDateString('ru-RU')});
+}
+function printLegal(rec, kind){
+  if(rec?.templateVersion && rec.templateVersion !== BronClientDocuments.version){alert('Эта версия шаблона отличается от сохранённой. Используйте исходный PDF документа.');return;}
+  const m=legalModel(kind,rec);
+  doPrint(`<div class="doc legal-doc">${docHead(m.title,rec)}${BronClientDocuments.render(m)}</div>`,`${m.title} ${state.contractNo || rec?.no || ''}`);
+}
+function missingDocumentFields(kind){
+  const fields={client:'заказчик',address:'адрес',contractMaterial:'маркировка материала',contractSigner:'лицо, принявшее заказ'};
+  if(kind==='contract') Object.assign(fields,{contractStart:'начало работ',contractEnd:'окончание работ',contractAdvance:'аванс (или 0)'});
+  else if(kind==='act') Object.assign(fields,{contractNo:'номер договора',contractActDate:'дата приёмки'});
+  else Object.assign(fields,{contractFirstWash:'срок первой мойки',contractActDate:'дата установки / акта'});
+  const missing=Object.keys(fields).filter(k=>!String(state[k]??'').trim()).map(k=>fields[k]);
+  if(kind==='contract' && state.contractStart && state.contractEnd && state.contractStart>state.contractEnd) missing.push('окончание не раньше начала');
+  if(kind==='contract' && String(state.contractAdvance??'').trim() && (!/^\d+(?:[.,]\d{1,2})?$/.test(String(state.contractAdvance).trim()) || num(state.contractAdvance)>figures().revenue)) missing.push('корректный аванс в пределах суммы');
+  return missing;
+}
+document.querySelectorAll('[data-client-doc]').forEach(button=>button.addEventListener('click',()=>{
+  const kind=button.dataset.clientDoc,format=button.dataset.format;
+  if(format==='preview'){
+    const m=legalModel(kind);$('clientDocumentContent').innerHTML=`<h2>${esc(m.title)}</h2>${BronClientDocuments.render(m)}`;
+    $('clientDocumentPreview').hidden=false;
+    $('clientDocumentStatus').textContent='Предпросмотр. Пропущенные сведения показаны линиями для заполнения.';
+    $('clientDocumentPreview').scrollIntoView({block:'start',behavior:'smooth'});return;
+  }
+  const missing=missingDocumentFields(kind);
+  if(missing.length){$('documentDetails').open=true;$('clientDocumentStatus').textContent='Перед сохранением заполните: '+missing.join(', ')+'. Пустой шаблон можно скачать по ссылке.';return;}
+  if(!state.contractNo){state.contractNo=makeNo(new Date());save();syncInputs();}
+  const rec=newOrder(kind);
+  if(format==='pdf') pdfMode=true;
+  printLegal(rec,kind);
+}));
+$('closeDocumentPreview').addEventListener('click',()=>{$('clientDocumentPreview').hidden=true;});
+
 /* ---------- saved orders ---------- */
 const ORD = 'film-calc-orders-v1';
 const SNAP_SKIP = [];
@@ -1359,11 +1444,11 @@ function saveOrders(a){ try{ localStorage.setItem(ORD, JSON.stringify(a)); windo
 function snapshot(){ const s = clone(state); return s; }
 function newOrder(kind){
   const F = figures(), snap = snapshot(), list = loadOrders(), sig = JSON.stringify(snap);
-  const same = list.find(o => (o.kind || 'prelim') === kind && JSON.stringify(o.snap) === sig);
+  const same = list.find(o => (o.kind || 'prelim') === kind && (!LEGAL_KINDS.includes(kind) || o.templateVersion === BronClientDocuments.version) && JSON.stringify(o.snap) === sig);
   if (same) return same;
   const d = new Date();
   const base = makeNo(d); let no = base, k = 1; while (list.some(o => o.no === no)) no = `${base}-${++k}`;
-  const rec = {kind, no, date: d.toISOString(), name: state.name || '', client: state.client || '', total: F.revenue, area: F.glass, snap};
+  const rec = {kind, ...(LEGAL_KINDS.includes(kind)?{templateVersion:BronClientDocuments.version}:{}), no, date: d.toISOString(), name: state.name || '', client: state.client || '', total: F.revenue, area: F.glass, snap};
   list.unshift(rec); saveOrders(list); renderOrders(); return rec;
 }
 function withSnapshot(snap, fn){
@@ -1374,12 +1459,12 @@ function renderOrders(){
   const list = loadOrders(), el = $('orders');
   if (!list.length){ el.innerHTML = '<p class="empty">Пока нет сохранённых документов. Выберите «Предварительный расчёт» или «Заказ-наряд» в этом разделе.</p>'; return; }
   el.innerHTML = `<table class="orders"><thead><tr><th>Документ</th><th>№</th><th>Дата</th><th>Объект · заказчик</th><th>Площадь</th><th>Сумма</th><th></th></tr></thead><tbody>
-    ${list.map((o,i) => `<tr><td data-label="Документ">${(o.kind || 'prelim') === 'final' ? '<b>Заказ-наряд</b>' : 'Предв. расчёт'}</td><td class="n" data-label="Номер">${esc(o.no)}</td><td class="n" data-label="Дата">${new Date(o.date).toLocaleDateString('ru-RU')}</td><td data-label="Объект · заказчик">${esc([o.name, o.client].filter(Boolean).join(' · ') || '—')}</td><td class="n" data-label="Площадь">${fmt(o.area,2)} м²</td><td class="n" data-label="Сумма">${rub(o.total)}</td>
+    ${list.map((o,i) => `<tr><td data-label="Документ">${esc(documentName(o.kind || 'prelim'))}</td><td class="n" data-label="Номер">${esc(o.no)}</td><td class="n" data-label="Дата">${new Date(o.date).toLocaleDateString('ru-RU')}</td><td data-label="Объект · заказчик">${esc([o.name, o.client].filter(Boolean).join(' · ') || '—')}</td><td class="n" data-label="Площадь">${fmt(o.area,2)} м²</td><td class="n" data-label="Сумма">${rub(o.total)}</td>
       <td class="act"><button data-op="print" data-i="${i}">Печать</button>${(o.kind || 'prelim') === 'prelim' ? `<button data-op="final" data-i="${i}" title="Оформить окончательный заказ-наряд по этим же цифрам">→ Заказ-наряд</button>` : ''}<button data-op="open" data-i="${i}">В расчёт</button><button data-op="del" data-i="${i}" class="x" aria-label="Удалить">✕</button></td></tr>`).join('')}
   </tbody></table>`;
   el.querySelectorAll('button[data-op]').forEach(b => b.addEventListener('click', () => {
     const list = loadOrders(), o = list[+b.dataset.i]; if (!o) return;
-    if (b.dataset.op === 'print') withSnapshot(o.snap, () => printClient(o, o.kind || 'prelim'));
+    if (b.dataset.op === 'print') withSnapshot(o.snap, () => LEGAL_KINDS.includes(o.kind) ? printLegal(o,o.kind) : printClient(o, o.kind || 'prelim'));
     if (b.dataset.op === 'final'){ withSnapshot(o.snap, () => { const rec = newOrder('final'); printClient(rec, 'final'); }); return; }
     if (b.dataset.op === 'open'){ if (!confirm(`Загрузить в расчёт заказ-наряд № ${o.no}? Текущие данные на экране будут заменены.`)) return;
       state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined}, clone(o.snap))); save(); renderMat(); syncInputs(); renderPanes(); compute(); showPage('calc'); }
@@ -1502,7 +1587,7 @@ async function makePdf(html, title){
     pdfFile = new File([blob], name, {type:'application/pdf'});
     pdfBar(`PDF готов · ${Math.max(1, Math.round(blob.size / 1024))} КБ`, true);
   }catch(e){
-    pdfBar(e && e.message === 'load' ? 'Не удалось загрузить модуль PDF — нужен интернет.' : 'Не получилось собрать PDF. Используйте «Предварительный расчёт» → Сохранить как PDF.', false);
+    pdfBar(e && e.message === 'load' ? 'Не удалось загрузить модуль PDF — нужен интернет.' : 'Не получилось собрать PDF. Используйте печать нужного документа → Сохранить как PDF.', false);
   }finally{ box.remove(); }
 }
 $('pdfShare').addEventListener('click', async () => {
@@ -1609,7 +1694,7 @@ window.BronCloudBridge = {
 };
 </script>
 <script src="cloud-sync-core.js?v=1"></script>
-<script src="cloud-data.js?v=1"></script>
+<script src="cloud-data.js?v=2"></script>
 <script src="yandex-disk.js?v=1"></script>
 <script src="cloud-sync.js?v=1"></script>
 <script>
