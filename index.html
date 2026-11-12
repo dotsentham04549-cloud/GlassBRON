@@ -160,6 +160,73 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
   .topbar .in{padding:12px}
 }
 
+
+/* Section navigation: a stable bottom bar in browsers and installed PWA. */
+[hidden]{display:none!important}
+.app-page{margin-top:20px;min-width:0}
+.app-page>.grid{margin-top:0}
+.app-page>.wide-card:first-child{margin-top:0}
+.workspace-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px;align-items:start}
+.workspace-grid>*{min-width:0}
+.wrap{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+.head h1:focus{outline:none}
+.topbar .in{flex-wrap:nowrap}
+.brand{letter-spacing:.08em}
+.topbar .top-shortcut{flex:none;min-height:42px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions button{min-height:44px}
+.next-step{justify-content:flex-end}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--surface);border-top:1px solid var(--line-strong);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -3px 18px #00000008}
+.bottom-nav-inner{max-width:720px;margin:auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:6px 8px}
+.bottom-nav button{min-width:0;min-height:54px;border:0;background:transparent;border-radius:6px;padding:5px 2px;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;line-height:1.2}
+.bottom-nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.bottom-nav button[aria-current="page"]{color:var(--accent);background:var(--field);font-weight:600;box-shadow:inset 0 2px var(--accent)}
+#pdfBar{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+@media(max-width:920px){.workspace-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){
+  .wrap{padding:18px 12px calc(96px + env(safe-area-inset-bottom,0px))}
+  .head h1{font-size:25px}.head p{font-size:13px}
+  .brand{font-size:11px;letter-spacing:.04em}.brand b{padding-right:8px;margin-right:8px}
+  .topbar .in{gap:8px;padding:10px 12px}.topbar .top-shortcut{padding:7px 9px;font-size:12px}
+  .workspace-grid,.grid{gap:14px}.card{padding:14px}
+  .bottom-nav-inner{gap:2px;padding:5px 4px}.bottom-nav button{font-size:10px}
+  .actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .actions button{padding:10px 6px;font-size:13px}
+  .btns{gap:8px}.btns button,.btnlink{max-width:100%;min-height:44px}
+  .objs{grid-template-columns:minmax(0,1fr)}.objs .row2 select{flex-basis:100%}
+  .panes,.panes tbody{display:block;width:100%}
+  .panes thead{display:none}
+  .panes tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;position:relative;padding:12px;margin-bottom:12px;border:1px solid var(--line);border-radius:6px;background:var(--field)}
+  .panes td{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0}
+  .panes td::before{content:attr(data-label);font-size:12px;color:var(--muted)}
+  .panes td.nm{grid-column:1/-1;padding-right:32px}
+  .panes td input,.panes td.nm input{min-width:0;background:var(--surface);min-height:42px}
+  .panes td.c{align-items:flex-start}.panes td.c input{min-height:22px;width:22px;height:22px;margin:8px 0}
+  .panes td.area{text-align:left;justify-content:center;white-space:normal;overflow-wrap:anywhere}
+  .panes td.remove-glass{position:absolute;top:8px;right:6px}.panes td.remove-glass::before{display:none}
+  .panes .remove-glass button{min-width:36px;min-height:44px}
+  .rows div{gap:10px}.rows div span:last-child{overflow-wrap:anywhere}
+  .kpi{padding:10px}.kpi strong{font-size:16px}
+}
+@media print{.bottom-nav,#installBar{display:none!important}}
+
+
+.calculation-details{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+.calculation-details summary{cursor:pointer;font-size:14px;font-weight:500;min-height:32px}
+.calculation-details[open]>summary{margin-bottom:10px}
+@media(max-width:600px){
+  #page-calc>.grid{display:flex;flex-direction:column}
+  #page-calc>.grid>.stack,#page-calc #result{width:100%}
+  #page-calc #result{order:-1}
+  .orders{min-width:0;display:block}.orders thead{display:none}.orders tbody{display:block}
+  .orders tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+  .orders td{display:block;padding:0;border:0;min-width:0;white-space:normal;overflow-wrap:anywhere}
+  .orders td::before{content:attr(data-label);display:block;font:12px var(--sans);color:var(--muted);margin-bottom:3px}
+  .orders td:first-child,.orders td:nth-child(4),.orders td.act{grid-column:1/-1}
+  .orders td.act{display:flex;flex-wrap:wrap;gap:8px;text-align:left}.orders td.act::before{display:none}
+  .orders td.act button{margin:0;min-height:44px}
+}
+
 /* ---------- print ---------- */
 #printArea{display:none}
 @page{size:A4;margin:14mm 14mm 16mm}
@@ -241,24 +308,18 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
 <body>
 <div class="app">
   <div class="topbar"><div class="in">
-    <div class="brand"><b id="brandName">ALL IN</b>Бронирование стёкол</div>
-    <div class="actions">
-      <button id="printClient">Предварительный расчёт</button>
-      <button id="pdfClient" title="Предварительный расчёт файлом PDF — отправить клиенту">PDF расчёта</button>
-      <button id="printFinal" class="solid">Заказ-наряд</button>
-      <button id="printCut">Раскрой для мастера</button>
-    </div>
+    <div class="brand"><b id="brandName">ALL IN</b>Бронь стёкол</div><button class="top-shortcut" data-go="docs">Документы ↗</button>
+
   </div></div>
 
   <div class="wrap">
     <div class="head">
-      <h1>Расчёт стоимости и раскрой плёнки</h1>
-      <p>Внутренний расчёт: себестоимость, прибыль и раскладка стёкол на рулоне. Клиенту печатается заказ с размерами и суммами, мастеру — раскрой.</p>
+      <h1 id="pageTitle" tabindex="-1">Заказ</h1>
+      <p id="pageDescription">Заказчик, объект и размеры стёкол.</p>
     </div>
 
-    <div class="grid">
-      <div class="stack">
-        <section class="card">
+    <section id="page-order" class="app-page" aria-labelledby="pageTitle">
+      <div class="workspace-grid">        <section class="card">
           <h2 class="kicker">Объект</h2>
           <div class="objs">
             <label class="f">Название объекта<input id="objName" data-k="name" placeholder="Например, Мой дом"></label>
@@ -281,25 +342,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <button id="importBtn">Загрузить данные</button>
             <input type="file" id="importFile" accept=".json,application/json" hidden>
           </div>
-        </section>
-
-        <details class="card" id="cloudPanel">
-          <summary><h2 class="kicker">Яндекс Диск · синхронизация</h2></summary>
-          <p class="note" id="cloudStatus" role="status" aria-live="polite">Яндекс Диск не подключён.</p>
-          <div id="cloudSetup">
-            <p class="note">Подключите один и тот же Яндекс на телефоне и компьютере. Расчёты, объекты, скидки и документы будут синхронизироваться, пока калькулятор открыт. При первом подключении разные версии сохранятся обе.</p>
-            <div class="fields" style="margin-top:12px">
-              <label class="f">ClientID приложения<input id="cloudClient" autocomplete="off" spellcheck="false" value="35fc3535b9134626af99c98891181719"></label>
-              <label class="f">Токен доступа Яндекса<input id="cloudToken" type="password" autocomplete="off" spellcheck="false" placeholder="Вставьте токен со страницы Яндекса"></label>
-            </div>
-            <div class="btns"><a class="btnlink" id="cloudAuthorize" target="_blank" rel="noopener noreferrer">1. Получить доступ в Яндексе</a><button class="primary" id="cloudConnect">2. Подключить Диск</button></div>
-            <p class="note">На странице Яндекса разрешите доступ, скопируйте токен и вставьте его в поле выше. Токен хранится только в этом браузере, не входит в выгрузки и не передаётся в GitHub. Подключение разрешает сохранять данные калькулятора в папке приложения на вашем Диске.</p>
-          </div>
-          <div id="cloudActions" class="btns" hidden><button class="primary" id="cloudNow">Синхронизировать сейчас</button><button id="cloudDisconnect">Отключить на этом устройстве</button></div>
-          <div id="cloudConflicts" class="warn" hidden></div>
-        </details>
-
-        <section class="card">
+        </section>        <section class="card">
           <h2 class="kicker">Стёкла, видимая часть, см</h2>
           <div class="tscroll">
             <table class="panes">
@@ -337,9 +380,65 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
               <button class="x" id="pasteClose">Закрыть</button>
             </div>
           </div>
-        </section>
-
-        <section class="card">
+        </section></div>
+      <div class="btns next-step"><button class="primary" data-go="calc">К расчёту →</button></div>
+    </section>
+    <section id="page-calc" class="app-page" aria-labelledby="pageTitle" hidden>
+      <div class="grid"><div class="stack">        <section class="card">
+          <h2 class="kicker">Цена для клиента</h2>
+          <div class="tariffs" role="radiogroup" aria-label="Тариф">
+            <label><input type="radio" name="tariff" value="std"><span><b>Стандарт</b><small id="tStd"></small></span></label>
+            <label><input type="radio" name="tariff" value="prot"><span><b>Защита</b><small id="tProt"></small></span></label>
+          </div>
+<div class="fields"><label class="f">Скидка<input data-k="discountValue" inputmode="decimal" placeholder="0"></label><label class="f">Вид скидки<select data-s="discountMode"><option value="percent">В процентах, %</option><option value="rub">В рублях, ₽</option></select></label></div><details class="calculation-details"><summary>Тарифы, доплаты и округление</summary><div class="fields"><label class="f">Стандарт: работа, ₽/м²<input data-k="workPrice" inputmode="decimal"></label><label class="f">Защита: работа, ₽/м²<input data-k="workProt" inputmode="decimal"></label><label class="f">Мин. площадь стекла, м²<input data-k="minArea" inputmode="decimal"></label><label class="f">Мин. заказ, ₽<input data-k="minOrder" inputmode="decimal"></label><label class="f">Штапики, ₽/створка<input data-k="beadClient" inputmode="decimal"></label><label class="f">Доп. работы, ₽<input data-k="extra" inputmode="decimal"></label><label class="f">Округление итога<select data-s="roundMode"><option value="none">Не округлять</option><option value="down">Вниз, в пользу клиента</option><option value="nearest">До ближайшего</option></select></label><label class="f">Шаг округления<select data-s="roundStep"><option value="10">10 ₽</option><option value="50">50 ₽</option><option value="100">100 ₽</option></select></label></div></details>
+<details class="calculation-details"><summary>Как считается цена и скидка</summary>          <p class="note">Скидка применяется к итогу после округления, включая выезд, и уменьшает прибыль компании. Оплата мастеру за работу, штапики и дорогу не меняется. Скидка считается до целого рубля, максимум — вся сумма заказа.</p>
+          <p class="note">«Стандарт» — оклейка по видимой части стекла, штапики по желанию за доплату. «Защита» — все стёкла с заводкой под штапик, доплата за штапики не берётся, она уже в цене.</p>
+          <p class="note">Клиенту цена складывается из работы и материала (цена материала задаётся в блоке «Материал»). Стекло меньше минимальной площади считается как минимальная площадь — и для клиента, и для оплаты мастеру.</p>
+        </details></section>        <section class="card">
+          <h2 class="kicker">Выезд</h2>
+          <div class="zones" role="radiogroup" aria-label="Зона выезда">
+            <label><input type="radio" name="zone" value="city"> Город</label>
+            <label><input type="radio" name="zone" value="suburb"> Пригород до 30 км</label>
+            <label><input type="radio" name="zone" value="region"> Область, по км</label>
+          </div>
+          <div class="fields" style="margin-top:14px">
+            <label class="f">Бесплатно по городу от, ₽<input data-k="freeFrom" inputmode="decimal"></label>
+            <label class="f">Выезд по городу, ₽<input data-k="cityFee" inputmode="decimal"></label>
+            <label class="f">Пригород, ₽<input data-k="suburbFee" inputmode="decimal"></label>
+            <label class="f">Область, ₽/км<input data-k="perKm" inputmode="decimal"></label>
+            <label class="f" id="kmField">В одну сторону, км<input data-k="km" inputmode="decimal"></label>
+          </div>
+        </section></div><aside class="card" id="result"></aside></div>
+      <div class="btns next-step"><button class="primary" data-go="docs">К документам →</button><button data-go="settings">Материал и оплата мастеру</button></div>
+    </section>
+    <section id="page-cut" class="app-page" aria-labelledby="pageTitle" hidden>    <section class="card wide-card">
+      <h2 class="kicker">Раскрой на рулоне</h2>
+      <div class="status" id="status"></div>
+      <div class="rollscroll" id="rollView"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--film)"></i>Стекло</span>
+        <span><i class="sw" style="background:transparent;border-style:dashed"></i>Запас на подрезку</span>
+        <span><i class="sw" style="background:var(--warn-soft);border-color:var(--warn)"></i>Шире рулона, со стыком</span>
+      </div>
+    </section>    <section class="card wide-card">
+      <h2 class="kicker">Карта резки</h2>
+      <div class="tscroll" id="cutList"></div>
+    </section></section>
+    <section id="page-docs" class="app-page" aria-labelledby="pageTitle" hidden>
+      <section class="card"><h2 class="kicker">Сформировать документ</h2>    <div class="actions">
+      <button id="printClient">Предварительный расчёт</button>
+      <button id="pdfClient" title="Предварительный расчёт файлом PDF — отправить клиенту">PDF расчёта</button>
+      <button id="printFinal" class="solid">Заказ-наряд</button>
+      <button id="printCut">Раскрой для мастера</button>
+    </div><label class="f" style="margin-top:14px"><span>Сумма заказа</span><strong id="documentTotal" class="mono"></strong></label></section>
+          <section class="card wide-card">
+      <h2 class="kicker">Сохранённые документы</h2>
+      <div class="tscroll" id="orders"></div>
+      <p class="note"><b>Предварительный расчёт</b> печатается до замера, <b>заказ-наряд</b> — после замера, когда цена согласована. Документ сохраняется сам при печати, со своим номером и всеми цифрами на момент печати. Его можно распечатать повторно или вернуть в расчёт. Чтобы получить файл, в окне печати выберите «Сохранить как PDF».</p>
+    </section>
+    </section>
+    <section id="page-settings" class="app-page" aria-labelledby="pageTitle" hidden>
+      <div class="workspace-grid"><div class="stack">        <section class="card">
           <h2 class="kicker">Материал</h2>
           <div class="objs">
             <label class="f">Материал для этого объекта<select id="matSel"></select></label>
@@ -354,9 +453,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
           </div>
           <p class="note" id="rollNote"></p>
           <div class="btns" style="margin-top:8px"><button id="matDel" class="x" style="padding-left:0">Удалить этот материал</button></div>
-        </section>
-
-        <section class="card">
+        </section>        <section class="card">
           <h2 class="kicker">Настройки: запас и оплата мастеру</h2>
           <div class="fields">
             <label class="f">Запас на сторону, см<input data-k="margin" inputmode="decimal"></label>
@@ -366,48 +463,7 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <label class="f">Расходники, ₽/м²<input data-k="cons" inputmode="decimal"></label>
           </div>
           <p class="note">Запас добавляется к каждой стороне стекла: кусок плёнки больше стекла на два запаса по высоте и по ширине.</p>
-        </section>
-
-        <section class="card">
-          <h2 class="kicker">Цена для клиента</h2>
-          <div class="tariffs" role="radiogroup" aria-label="Тариф">
-            <label><input type="radio" name="tariff" value="std"><span><b>Стандарт</b><small id="tStd"></small></span></label>
-            <label><input type="radio" name="tariff" value="prot"><span><b>Защита</b><small id="tProt"></small></span></label>
-          </div>
-          <div class="fields">
-            <label class="f">Стандарт: работа, ₽/м²<input data-k="workPrice" inputmode="decimal"></label>
-            <label class="f">Защита: работа, ₽/м²<input data-k="workProt" inputmode="decimal"></label>
-            <label class="f">Мин. площадь стекла, м²<input data-k="minArea" inputmode="decimal"></label>
-            <label class="f">Мин. заказ, ₽<input data-k="minOrder" inputmode="decimal"></label>
-            <label class="f">Штапики, ₽/створка<input data-k="beadClient" inputmode="decimal"></label>
-            <label class="f">Доп. работы, ₽<input data-k="extra" inputmode="decimal"></label>
-            <label class="f">Округление итога<select data-s="roundMode"><option value="none">Не округлять</option><option value="down">Вниз, в пользу клиента</option><option value="nearest">До ближайшего</option></select></label>
-            <label class="f">Шаг округления<select data-s="roundStep"><option value="10">10 ₽</option><option value="50">50 ₽</option><option value="100">100 ₽</option></select></label>
-            <label class="f">Скидка<input data-k="discountValue" inputmode="decimal" placeholder="0"></label>
-            <label class="f">Вид скидки<select data-s="discountMode"><option value="percent">В процентах, %</option><option value="rub">В рублях, ₽</option></select></label>
-          </div>
-          <p class="note">Скидка применяется к итогу после округления, включая выезд, и уменьшает прибыль компании. Оплата мастеру за работу, штапики и дорогу не меняется. Скидка считается до целого рубля, максимум — вся сумма заказа.</p>
-          <p class="note">«Стандарт» — оклейка по видимой части стекла, штапики по желанию за доплату. «Защита» — все стёкла с заводкой под штапик, доплата за штапики не берётся, она уже в цене.</p>
-          <p class="note">Клиенту цена складывается из работы и материала (цена материала задаётся в блоке «Материал»). Стекло меньше минимальной площади считается как минимальная площадь — и для клиента, и для оплаты мастеру.</p>
-        </section>
-
-        <section class="card">
-          <h2 class="kicker">Выезд</h2>
-          <div class="zones" role="radiogroup" aria-label="Зона выезда">
-            <label><input type="radio" name="zone" value="city"> Город</label>
-            <label><input type="radio" name="zone" value="suburb"> Пригород до 30 км</label>
-            <label><input type="radio" name="zone" value="region"> Область, по км</label>
-          </div>
-          <div class="fields" style="margin-top:14px">
-            <label class="f">Бесплатно по городу от, ₽<input data-k="freeFrom" inputmode="decimal"></label>
-            <label class="f">Выезд по городу, ₽<input data-k="cityFee" inputmode="decimal"></label>
-            <label class="f">Пригород, ₽<input data-k="suburbFee" inputmode="decimal"></label>
-            <label class="f">Область, ₽/км<input data-k="perKm" inputmode="decimal"></label>
-            <label class="f" id="kmField">В одну сторону, км<input data-k="km" inputmode="decimal"></label>
-          </div>
-        </section>
-
-        <details class="card">
+        </section></div><div class="stack">        <details class="card">
           <summary><h2 class="kicker">Реквизиты для заказа</h2></summary>
           <div class="fields wide">
             <label class="f">Исполнитель<input data-k="company"></label>
@@ -418,36 +474,26 @@ table.cut{width:100%;border-collapse:collapse;min-width:560px}
             <label class="f">Цены действительны, дней<input data-k="validDays" inputmode="numeric"></label>
           </div>
           <label class="chk" style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px"><input type="checkbox" id="splitLines" style="width:auto"> Показывать в документах материал и работу отдельно (если организация просит)</label>
-        </details>
-      </div>
-
-      <aside class="card" id="result"></aside>
-    </div>
-
-    <section class="card wide-card">
-      <h2 class="kicker">Раскрой на рулоне</h2>
-      <div class="status" id="status"></div>
-      <div class="rollscroll" id="rollView"></div>
-      <div class="legend">
-        <span><i class="sw" style="background:var(--film)"></i>Стекло</span>
-        <span><i class="sw" style="background:transparent;border-style:dashed"></i>Запас на подрезку</span>
-        <span><i class="sw" style="background:var(--warn-soft);border-color:var(--warn)"></i>Шире рулона, со стыком</span>
-      </div>
-    </section>
-
-    <section class="card wide-card">
-      <h2 class="kicker">Карта резки</h2>
-      <div class="tscroll" id="cutList"></div>
-    </section>
-
-    <section class="card wide-card">
-      <h2 class="kicker">Сохранённые документы</h2>
-      <div class="tscroll" id="orders"></div>
-      <p class="note"><b>Предварительный расчёт</b> печатается до замера, <b>заказ-наряд</b> — после замера, когда цена согласована. Документ сохраняется сам при печати, со своим номером и всеми цифрами на момент печати. Его можно распечатать повторно или вернуть в расчёт. Чтобы получить файл, в окне печати выберите «Сохранить как PDF».</p>
+        </details>        <details class="card" id="cloudPanel">
+          <summary><h2 class="kicker">Яндекс Диск · синхронизация</h2></summary>
+          <p class="note" id="cloudStatus" role="status" aria-live="polite">Яндекс Диск не подключён.</p>
+          <div id="cloudSetup">
+            <p class="note">Подключите один и тот же Яндекс на телефоне и компьютере. Расчёты, объекты, скидки и документы будут синхронизироваться, пока калькулятор открыт. При первом подключении разные версии сохранятся обе.</p>
+            <div class="fields" style="margin-top:12px">
+              <label class="f">ClientID приложения<input id="cloudClient" autocomplete="off" spellcheck="false" value="35fc3535b9134626af99c98891181719"></label>
+              <label class="f">Токен доступа Яндекса<input id="cloudToken" type="password" autocomplete="off" spellcheck="false" placeholder="Вставьте токен со страницы Яндекса"></label>
+            </div>
+            <div class="btns"><a class="btnlink" id="cloudAuthorize" target="_blank" rel="noopener noreferrer">1. Получить доступ в Яндексе</a><button class="primary" id="cloudConnect">2. Подключить Диск</button></div>
+            <p class="note">На странице Яндекса разрешите доступ, скопируйте токен и вставьте его в поле выше. Токен хранится только в этом браузере, не входит в выгрузки и не передаётся в GitHub. Подключение разрешает сохранять данные калькулятора в папке приложения на вашем Диске.</p>
+          </div>
+          <div id="cloudActions" class="btns" hidden><button class="primary" id="cloudNow">Синхронизировать сейчас</button><button id="cloudDisconnect">Отключить на этом устройстве</button></div>
+          <div id="cloudConflicts" class="warn" hidden></div>
+        </details></div></div>
     </section>
   </div>
 </div>
 
+<nav class="bottom-nav" aria-label="Разделы приложения"><div class="bottom-nav-inner"><button type="button" data-go="order" aria-controls="page-order" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4H8zM6 6H4v15h16V6h-2M8 12h8M8 16h5"/></svg><span>Заказ</span></button><button type="button" data-go="calc" aria-controls="page-calc"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 11h1m5 0h1m-7 4h1m5 0h1m-7 4h1m5 0h1"/></svg><span>Расчёт</span></button><button type="button" data-go="cut" aria-controls="page-cut"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM9 5v14M9 12h12"/></svg><span>Раскрой</span></button><button type="button" data-go="docs" aria-controls="page-docs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6"/></svg><span>Документы</span></button><button type="button" data-go="settings" aria-controls="page-settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg><span>Настройки</span></button></div></nav>
 <div id="printArea"></div>
 <div id="pdfBar" hidden role="status"><span id="pdfMsg"></span><button class="primary" id="pdfShare">Отправить</button><button id="pdfSave">Скачать</button><button class="x" id="pdfX" aria-label="Закрыть">×</button></div>
 
@@ -503,7 +549,31 @@ let state = load();
 if (!state.phone) state.phone = DEFAULTS.phone;
 if (state.workPrice === '850') state.workPrice = DEFAULTS.workPrice;   // старая цена 850+800 → новая 1200+800
 
+
 /* ---------- inputs ---------- */
+// Navigation never alters calculator state or the #sizes / #import links.
+const appPages = {
+  order:['Заказ','Заказчик, объект и размеры стёкол.'],
+  calc:['Расчёт','Стоимость для клиента, скидка и итог работы.'],
+  cut:['Раскрой','Раскладка плёнки на рулоне и карта резки.'],
+  docs:['Документы','Предварительный расчёт, заказ-наряд и история документов.'],
+  settings:['Настройки','Материалы, оплата мастеру, реквизиты и синхронизация.']
+};
+function showPage(name, focus = true){
+  if (!appPages[name]) return;
+  document.querySelectorAll('.app-page').forEach(page => { page.hidden = page.id !== 'page-' + name; });
+  document.querySelectorAll('.bottom-nav [data-go]').forEach(button => {
+    if (button.dataset.go === name) button.setAttribute('aria-current','page');
+    else button.removeAttribute('aria-current');
+  });
+  $('pageTitle').textContent = appPages[name][0];
+  $('pageDescription').textContent = appPages[name][1];
+  if (name === 'docs') $('documentTotal').textContent = rub(figures().revenue);
+  if (focus){ $('pageTitle').focus({preventScroll:true}); window.scrollTo({top:0,behavior:'instant'}); }
+}
+document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => showPage(button.dataset.go)));
+window.addEventListener('hashchange', () => { if (location.hash) showPage('order'); });
+
 document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.addEventListener('input', () => {
   state[inp.dataset.k] = inp.value; save();
   if (inp.dataset.k === 'company') $('brandName').textContent = state.company || 'ALL IN';
@@ -524,13 +594,13 @@ function syncInputs(){
 function renderPanes(){
   const tb = $('panes'), prot = state.tariff === 'prot';
   tb.innerHTML = state.panes.map((p,i) => `<tr>
-      <td class="nm"><input data-i="${i}" data-f="n" aria-label="Помещение" value="${esc(p.n)}"></td>
-      <td><input inputmode="decimal" data-i="${i}" data-f="h" aria-label="Высота, см" value="${esc(p.h)}"></td>
-      <td><input inputmode="decimal" data-i="${i}" data-f="w" aria-label="Ширина, см" value="${esc(p.w)}"></td>
-      <td><input inputmode="numeric" data-i="${i}" data-f="q" aria-label="Количество" value="${esc(p.q)}"></td>
-      <td class="c"><input type="checkbox" data-bead="${i}" aria-label="Снимать штапики" ${p.bead || prot ? 'checked' : ''} ${prot ? 'disabled title="В тарифе «Защита» все стёкла под штапик"' : ''}></td>
-      <td class="area" id="a${i}"></td>
-      <td><button class="x" data-del="${i}" aria-label="Удалить строку">✕</button></td></tr>`).join('');
+      <td class="nm" data-label="Помещение"><input data-i="${i}" data-f="n" aria-label="Помещение" value="${esc(p.n)}"></td>
+      <td data-label="Высота, см"><input inputmode="decimal" data-i="${i}" data-f="h" aria-label="Высота, см" value="${esc(p.h)}"></td>
+      <td data-label="Ширина, см"><input inputmode="decimal" data-i="${i}" data-f="w" aria-label="Ширина, см" value="${esc(p.w)}"></td>
+      <td data-label="Количество"><input inputmode="numeric" data-i="${i}" data-f="q" aria-label="Количество" value="${esc(p.q)}"></td>
+      <td class="c" data-label="Под штапик"><input type="checkbox" data-bead="${i}" aria-label="Снимать штапики" ${p.bead || prot ? 'checked' : ''} ${prot ? 'disabled title="В тарифе «Защита» все стёкла под штапик"' : ''}></td>
+      <td class="area" data-label="Площадь" id="a${i}"></td>
+      <td class="remove-glass"><button class="x" data-del="${i}" aria-label="Удалить строку">✕</button></td></tr>`).join('');
   tb.querySelectorAll('input[data-f]').forEach(inp => inp.addEventListener('input', () => {
     state.panes[+inp.dataset.i][inp.dataset.f] = inp.value; save(); schedule(inp.dataset.f === 'n');
   }));
@@ -965,6 +1035,7 @@ function render(F, L, seams, Wcm){
 }
 
 function renderSummary(F, L, seams, Wcm){
+  if ($('documentTotal')) $('documentTotal').textContent = rub(F.revenue);
   const lenM = L ? L.total / 100 : 0, filmArea = lenM * F.Wm;
   const filmCost = L ? lenM * (F.Lm > 0 ? F.rollPrice / F.Lm : 0) : 0;
   const consCost = F.glass * F.cons, laborArea = (F.bill - F.beadBill) * F.labor, laborBead = F.beadBill * F.laborBead, laborExact = laborArea + laborBead + F.masterTravel, masterPay = Math.round(laborExact / 100) * 100, laborCost = masterPay - F.masterTravel;
@@ -989,7 +1060,7 @@ function renderSummary(F, L, seams, Wcm){
       <div class="kpi"><span>Себестоимость</span><strong>${pend(rub(cost))}</strong></div>
       <div class="kpi"><span>Себест. за м² стекла</span><strong>${pend(rub(cost / F.glass))}</strong></div>
     </div>
-    <div class="rows">
+    <details class="calculation-details"><summary>Подробности расчёта</summary><div class="rows">
       <div><span>Материал</span><span>${esc(F.M.name)}</span></div>
       <div><span>Расход плёнки</span><span>${pend(`${fmt(lenM,2)} м · ${fmt(filmArea,2)} м²`)}</span></div>
       <div><span>Отход с запасом</span><span>${pend(fmt(waste*100) + '%')}</span></div>
@@ -1005,7 +1076,7 @@ function renderSummary(F, L, seams, Wcm){
       <div><span>Наценка</span><span>${pend('×' + fmt(F.revenue / Math.max(cost,1),1))}</span></div>
       <div><span>Остаток рулона</span><span>${pend(lenM <= F.Lm ? fmt(F.Lm - lenM,2) + ' м' : '—')}</span></div>
     </div>
-    ${warns.length ? `<div class="warns">${warns.map(w => `<div class="warn">${esc(w)}</div>`).join('')}</div>` : ''}`;
+    </details>${warns.length ? `<div class="warns">${warns.map(w => `<div class="warn">${esc(w)}</div>`).join('')}</div>` : ''}`;
 }
 
 /* ---------- drawing ---------- */
@@ -1168,7 +1239,6 @@ function printClient(rec, kind){
   if (F.extra) extra.push(['Дополнительные работы', F.extra]);
   if (F.topUp > 0) extra.push(['Доплата до минимальной стоимости заказа', F.topUp]);
   extra.push([F.travel ? 'Выезд мастера' : 'Выезд мастера по городу', F.travel, !F.travel]);
-  if (Math.abs(F.roundDiff) >= 0.5) extra.push(['Округление', F.roundDiff]);
   if (F.discount > 0){ extra.push(['Сумма до скидки', F.beforeDiscount]); extra.push([F.discountLabel, -F.discount]); }
   const facts = [['Исполнитель', [state.company, state.req].filter(Boolean).join(' · ')], ['Заказчик', state.client], ['Телефон заказчика', state.clientPhone], ['Адрес объекта', state.address], ['Примечание', state.note], ['Материал', F.M.name]].filter(r => (r[1]||'').trim());
   const own = F.sell <= 0;
@@ -1228,9 +1298,9 @@ function withSnapshot(snap, fn){
 }
 function renderOrders(){
   const list = loadOrders(), el = $('orders');
-  if (!list.length){ el.innerHTML = '<p class="empty">Пока нет сохранённых документов. Нажмите «Предварительный расчёт» или «Заказ-наряд» вверху.</p>'; return; }
+  if (!list.length){ el.innerHTML = '<p class="empty">Пока нет сохранённых документов. Выберите «Предварительный расчёт» или «Заказ-наряд» в этом разделе.</p>'; return; }
   el.innerHTML = `<table class="orders"><thead><tr><th>Документ</th><th>№</th><th>Дата</th><th>Объект · заказчик</th><th>Площадь</th><th>Сумма</th><th></th></tr></thead><tbody>
-    ${list.map((o,i) => `<tr><td>${(o.kind || 'prelim') === 'final' ? '<b>Заказ-наряд</b>' : 'Предв. расчёт'}</td><td class="n">${esc(o.no)}</td><td class="n">${new Date(o.date).toLocaleDateString('ru-RU')}</td><td>${esc([o.name, o.client].filter(Boolean).join(' · ') || '—')}</td><td class="n">${fmt(o.area,2)} м²</td><td class="n">${rub(o.total)}</td>
+    ${list.map((o,i) => `<tr><td data-label="Документ">${(o.kind || 'prelim') === 'final' ? '<b>Заказ-наряд</b>' : 'Предв. расчёт'}</td><td class="n" data-label="Номер">${esc(o.no)}</td><td class="n" data-label="Дата">${new Date(o.date).toLocaleDateString('ru-RU')}</td><td data-label="Объект · заказчик">${esc([o.name, o.client].filter(Boolean).join(' · ') || '—')}</td><td class="n" data-label="Площадь">${fmt(o.area,2)} м²</td><td class="n" data-label="Сумма">${rub(o.total)}</td>
       <td class="act"><button data-op="print" data-i="${i}">Печать</button>${(o.kind || 'prelim') === 'prelim' ? `<button data-op="final" data-i="${i}" title="Оформить окончательный заказ-наряд по этим же цифрам">→ Заказ-наряд</button>` : ''}<button data-op="open" data-i="${i}">В расчёт</button><button data-op="del" data-i="${i}" class="x" aria-label="Удалить">✕</button></td></tr>`).join('')}
   </tbody></table>`;
   el.querySelectorAll('button[data-op]').forEach(b => b.addEventListener('click', () => {
@@ -1238,7 +1308,7 @@ function renderOrders(){
     if (b.dataset.op === 'print') withSnapshot(o.snap, () => printClient(o, o.kind || 'prelim'));
     if (b.dataset.op === 'final'){ withSnapshot(o.snap, () => { const rec = newOrder('final'); printClient(rec, 'final'); }); return; }
     if (b.dataset.op === 'open'){ if (!confirm(`Загрузить в расчёт заказ-наряд № ${o.no}? Текущие данные на экране будут заменены.`)) return;
-      state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined}, clone(o.snap))); save(); renderMat(); syncInputs(); renderPanes(); compute(); window.scrollTo({top:0, behavior:'smooth'}); }
+      state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined}, clone(o.snap))); save(); renderMat(); syncInputs(); renderPanes(); compute(); showPage('calc'); }
     if (b.dataset.op === 'del'){ if (!confirm(`Удалить заказ-наряд № ${o.no}?`)) return; list.splice(+b.dataset.i,1); saveOrders(list); renderOrders(); }
   }));
 }
@@ -1477,7 +1547,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 </script>
 <!-- Установка на телефон: видна, только пока приложение не установлено -->
 <style>
-#installBar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:9999;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;border-radius:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 8px 28px rgba(0,0,0,.18);font-family:var(--sans)}
+#installBar{position:fixed;left:12px;right:12px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:9999;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;border-radius:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 8px 28px rgba(0,0,0,.18);font-family:var(--sans)}
 #installBar[hidden]{display:none}
 #installBar span{flex:1;font-size:14px}
 #installBar button{font:inherit;font-size:14px;font-weight:600;cursor:pointer;border-radius:8px;padding:9px 14px;background:var(--accent);color:var(--accent-ink);border:1px solid var(--accent)}
@@ -1503,4 +1573,3 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 </script>
 </body>
 </html>
-

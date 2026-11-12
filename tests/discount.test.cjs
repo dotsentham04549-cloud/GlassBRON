@@ -96,13 +96,15 @@ test('discount follows rounding and is shown in both document kinds', () => {
   for (const kind of ['prelim','final']){
     api.print(kind);
     const out = context.printed.output.replace(/[\s\u00a0\u202f]/g,'');
-    assert.ok(out.includes('Округление'));
+    assert.ok(!out.includes('Округление'));
     assert.ok(out.includes('Суммадоскидки'));
     assert.ok(out.includes('Скидка10,00%'));
     assert.ok(out.includes('-200'));
     assert.ok(out.includes('1800₽'));
     assert.ok(!out.includes('Мастеру'));
   }
+  api.summary();
+  assert.ok(context.document.getElementById('result').innerHTML.includes('Округление'));
 });
 
 test('saved snapshot keeps discount; old objects and documents have none', () => {
@@ -120,4 +122,3 @@ test('saved snapshot keeps discount; old objects and documents have none', () =>
   const old = api.snapshot(); delete old.discountMode; delete old.discountValue;
   api.withSnapshot(old, () => assert.equal(api.figures().discount, 0));
 });
-
