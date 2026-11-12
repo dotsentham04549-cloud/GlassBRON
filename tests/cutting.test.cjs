@@ -16,7 +16,7 @@ function app(){
   vm.runInContext(setup+'\n'+functions.map(source).join('\n')+'\n'+html.match(/^function makeNo\(d\).*$/m)[0]+`
     const BAND=750, BAND_MM=268;
     let lastLayout;
-    globalThis.api={cutSize,cutSizes,label,cutTable,printCut,
+    globalThis.api={cutSize,cutSizes,label,cutTable,printCut,masterScheme,
       layout(pane,margin,orientation=1){
         state.panes=[pane];state.margin=String(margin);
         const expanded=expand(152,margin);
@@ -72,4 +72,34 @@ test('room names are escaped in both cutting diagram and table',()=>{
     assert.ok(!output.includes('<img'));
     assert.ok(output.includes('&lt;img'));
   }
+});
+
+function piece(y,ph,no=1){
+  return {no,y,ph,x:0,pw:50,m:1,size:'140×48',label:'Стекло '+no,rotated:false};
+}
+function bands(output){return [...output.matchAll(/class="band"/g)].length;}
+test('a short layout prints one occupied strip with no empty roll remainder',()=>{
+  const {api}=app();
+  const output=api.masterScheme({total:186,placed:[piece(0,186)]},152,'HEADER');
+  assert.equal(bands(output),1);
+  assert.ok(!output.includes('остаток рулона'));
+  assert.ok(output.includes('0 – 1,86 м'));
+  assert.equal([...output.matchAll(/class="lpage/g)].length,1);
+});
+test('strip boundaries neither add empty strips nor lose short tails',()=>{
+  const {api}=app();
+  for(const [end,count] of [[750,1],[750.1,2],[1500,2],[1500.1,3]]){
+    const output=api.masterScheme({total:end,placed:[piece(0,end)]},152,'HEADER');
+    assert.equal(bands(output),count,`occupied length ${end}`);
+    assert.ok(!output.includes('остаток рулона'));
+  }
+});
+test('master printing skips unoccupied gaps and ignores unused total roll length',()=>{
+  const {api}=app();
+  const output=api.masterScheme({total:3000,placed:[piece(0,100,1),piece(1600,100,2)]},152,'HEADER');
+  assert.equal(bands(output),2);
+  assert.ok(output.includes('куски 1–1'));
+  assert.ok(output.includes('куски 2–2'));
+  assert.ok(output.includes('15 – 17 м'));
+  assert.equal(api.masterScheme({total:3000,placed:[]},152,'HEADER'),'');
 });

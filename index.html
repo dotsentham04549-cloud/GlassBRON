@@ -306,7 +306,8 @@ button.x{box-shadow:none}
 .doc .lpage{width:273mm}
 .doc .lpage + .lpage{break-before:page}
 .doc .ppage{page:auto;break-before:page;max-width:182mm}
-.doc .band{margin:0 0 7mm}
+.doc .band{margin:0 0 7mm;break-inside:avoid;page-break-inside:avoid}
+.doc .master-head{break-inside:avoid;break-after:avoid}
 .doc .band .cap{display:flex;justify-content:space-between;font-family:var(--mono);font-size:7.5pt;color:#5E656B;margin-bottom:2px}
 .doc .band svg{display:inline-block;vertical-align:top}
 .doc .bandwrap{line-height:0}
@@ -1377,7 +1378,7 @@ function renderOrders(){
     if (b.dataset.op === 'del'){ if (!confirm(`Удалить заказ-наряд № ${o.no}?`)) return; list.splice(+b.dataset.i,1); saveOrders(list); renderOrders(); }
   }));
 }
-// Horizontal band of the roll for the master's sheet (landscape A4, two bands of 7,5 m per sheet).
+// Horizontal strips up to 7.5 m long; the browser paginates occupied strips.
 const BAND = 750, BAND_MM = 268;
 function bandSVG(L, Wcm, from, to, mm, key){
   const len = to - from, sc = mm * 3.78, pad = 1 / mm, rul = 5 / mm;
@@ -1399,7 +1400,7 @@ function bandSVG(L, Wcm, from, to, mm, key){
   o += `<g clip-path="url(#b${key})">`;
   let labels = '';
   L.placed.forEach(p => {
-    if (p.y + p.ph <= from + 0.01 || p.y >= to - 0.01) return;
+    if (p.y + p.ph <= from + 1e-7 || p.y >= to - 1e-7) return;
     const x = p.y, y = p.x, w = p.ph, h = p.pw;
     if (p.seam) o += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="${0.7/sc}"/>`;
     else {
@@ -1415,18 +1416,16 @@ function bandSVG(L, Wcm, from, to, mm, key){
   return `<svg style="width:${(vw*mm).toFixed(2)}mm;height:${(vh*mm).toFixed(2)}mm" viewBox="${from - pad} ${-pad} ${vw} ${vh}" role="img" aria-label="Полоса рулона">${o}</svg>`;
 }
 function masterScheme(L, Wcm, head){
-  const mm = BAND_MM / BAND, bands = Math.max(1, Math.ceil((L.total - 0.5) / BAND)), sheets = Math.ceil(bands / 2);
-  let out = '';
-  for (let sh = 0; sh < sheets; sh++){
-    out += `<div class="lpage">${sh === 0 ? head : ''}`;
-    for (let k = sh*2; k < sh*2 + 2; k++){
-      const from = k * BAND, to = from + BAND;
-      const ids = L.placed.filter(p => p.y < to - 0.01 && p.y + p.ph > from + 0.01).map(p => p.no).sort((a,b) => a-b);
-      out += `<div class="band"><div class="cap"><span>Рулон ${fmt(from/100,1)} – ${fmt(to/100,1)} м${ids.length ? ` · куски ${ids[0]}–${ids[ids.length-1]}` : ''}</span><span>лист ${sh+1} из ${sheets} · полоса ${k+1}</span></div><div class="bandwrap">${bandSVG(L, Wcm, from, to, mm, k)}</div></div>`;
-    }
-    out += '</div>';
+  if (!L.placed.length) return '';
+  const mm = BAND_MM / BAND, used = Math.max(...L.placed.map(p => p.y + p.ph));
+  const strips = [];
+  for (let k = 0; k * BAND < used - 1e-7; k++){
+    const from = k * BAND, to = Math.min(from + BAND, used);
+    const ids = L.placed.filter(p => p.y < to - 1e-7 && p.y + p.ph > from + 1e-7).map(p => p.no).sort((a,b) => a-b);
+    if (!ids.length) continue;
+    strips.push(`<div class="band"><div class="cap"><span>Рулон ${fmtDimension(from/100)} – ${fmtDimension(to/100)} м · куски ${ids[0]}–${ids[ids.length-1]}</span><span>полоса ${strips.length+1}</span></div><div class="bandwrap">${bandSVG(L, Wcm, from, to, mm, k)}</div></div>`);
   }
-  return out;
+  return `<div class="lpage master-layout"><div class="master-head">${head}</div>${strips.join('')}</div>`;
 }
 function marginBox(F){
   const m = F.m;
