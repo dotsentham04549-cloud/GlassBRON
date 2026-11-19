@@ -56,3 +56,15 @@ test('opening a legacy client cannot carry over another client contract terms',(
  ctx.restore({name:'Old client',panes:s.panes});
  assert.equal(s.contractNo,'');assert.equal(s.contractMaterial,'');assert.equal(s.contractReceived,'');
 });
+
+test('mounting mode survives cloud sync while legacy settings keep four beads',()=>{
+ const {s,defaults,fields}=app(),tools=Data.createTools(defaults,fields);
+ s.beadSides='3';s.bead3Factor='85';
+ const result=tools.snapshot({settings:s,objects:{X:{panes:s.panes,beadSides:'3',bead3Factor:'85'}},orders:[]});
+ assert.equal(result.settings.beadSides,'3');assert.equal(result.objects.X.bead3Factor,'85');
+ const old=JSON.parse(JSON.stringify(s));delete old.beadSides;delete old.bead3Factor;
+ assert.equal(tools.snapshot({settings:old,objects:{},orders:[]}).settings.beadSides,'4');
+ const ctx={settings:s,figures:{prot:true,beadSides:3,rows:[{n:'Room',h:100,w:100,q:1}]}};
+ assert.ok(D.render(D.model('contract',ctx)).includes('Под 3 штапика, без верхнего'));
+ assert.ok(!D.render(D.model('contract',{...ctx,includeBeadSides:false})).includes('3 штапика'));
+});

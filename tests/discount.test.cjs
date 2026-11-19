@@ -122,3 +122,42 @@ test('saved snapshot keeps discount; old objects and documents have none', () =>
   const old = api.snapshot(); delete old.discountMode; delete old.discountValue;
   api.withSnapshot(old, () => assert.equal(api.figures().discount, 0));
 });
+
+test('three beads adjust only bead surcharge, not base work, material or cut allowance',()=>{
+ const {api}=app();
+ const pane={n:'Window',h:'100',w:'100',q:'1',bead:true};
+ api.reset({panes:[pane],beadSides:'4',minOrder:'0',freeFrom:'0',roundMode:'none'});
+ const four=api.figures();
+ api.state.beadSides='3';const three=api.figures();
+ assert.equal(four.revenue,2400);assert.equal(three.revenue,2300);
+ assert.equal(four.beadClient,400);assert.equal(three.beadClient,300);
+ assert.equal(four.laborBead,650);assert.equal(three.laborBead,600);
+ for(const k of ['labor','workP','matRev','m','glass','bill','beadBill'])assert.equal(three[k],four[k]);
+ api.state.tariff='prot';assert.equal(api.figures().workP,1575);assert.equal(api.figures().beadRev,0);
+ api.state.beadSides='4';assert.equal(api.figures().workP,1700);
+ api.state.beadSides='3';api.state.bead3Factor='100';assert.equal(api.figures().workP,1700);assert.equal(api.figures().laborBead,650);
+});
+test('bead factor remains bounded; unmarked standard glass and master discount protection remain unchanged',()=>{
+ const {api,elements}=app();
+ api.reset({panes:[{n:'Window',h:'100',w:'100',q:'1',bead:false}],beadSides:'3',minOrder:'0',freeFrom:'0',roundMode:'none'});
+ assert.equal(api.figures().revenue,2000);assert.equal(api.figures().beadBill,0);
+ api.state.panes[0].bead=true;api.state.bead3Factor='999';assert.equal(api.figures().beadClient,400);
+ api.state.bead3Factor='-5';assert.equal(api.figures().beadClient,0);assert.equal(api.figures().laborBead,450);
+ api.state.bead3Factor='75';api.summary();const base=masterPayment(elements.get('result').innerHTML);
+ api.state.discountValue='30';api.summary();assert.equal(masterPayment(elements.get('result').innerHTML),base);
+});
+test('legacy snapshots and saved objects retain four beads and their old prices',()=>{
+ const {api}=app();
+ api.reset({tariff:'prot',beadSides:'4',panes:[{n:'Window',h:'100',w:'100',q:'1',bead:true}],minOrder:'0',freeFrom:'0',roundMode:'none'});
+ const old=api.snapshot(),previous=api.figures().revenue;delete old.beadSides;delete old.bead3Factor;
+ api.state.beadSides='3';assert.notEqual(api.figures().revenue,previous);
+ api.withSnapshot(old,()=>{assert.equal(api.figures().beadSides,4);assert.equal(api.figures().revenue,previous);});
+ api.restoreObject({panes:old.panes,tariff:'prot'});assert.equal(api.figures().beadSides,4);
+});
+test('customer documents specify three beads without top for both tariffs',()=>{
+ const {api,context}=app();
+ for(const tariff of ['std','prot']){
+  api.reset({tariff,beadSides:'3',panes:[{n:'Window',h:'100',w:'100',q:'1',bead:true}]});
+  api.print('final');assert.ok(context.printed.output.includes('под 3 штапика, без верхнего'));
+ }
+});

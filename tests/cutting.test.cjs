@@ -103,3 +103,11 @@ test('master printing skips unoccupied gaps and ignores unused total roll length
   assert.ok(output.includes('15 – 17 м'));
   assert.equal(api.masterScheme({total:3000,placed:[]},152,'HEADER'),'');
 });
+
+test('master cutting labels include three beads and free top without changing glass dimensions',()=>{
+ const {api,context}=app();
+ const L=api.layout({...glass,bead:true},1,2),p=L.placed[0];
+ assert.equal(p.beadSides,3);assert.equal(api.cutSize(p),'142 × 67');
+ assert.ok(api.cutSizes(p).includes('верх без заводки'));
+ api.printCut();assert.ok(context.output.includes('под 3 штапика, без верхнего'));
+});

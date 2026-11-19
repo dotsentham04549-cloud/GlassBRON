@@ -14,7 +14,8 @@
     const company=[s.company,s.req].filter(Boolean).join(' · ');
     const contacts=[s.phone,s.contractEmail,s.site].filter(Boolean).join(' · ');
     const ref=field(s.contractNo), total=Number.isFinite(f.revenue)?money(f.revenue):blank;
-    const details=(f.rows||[]).map((r,i)=>[String(i+1),r.n,`${r.h} × ${r.w}`,String(r.q),r.bead||f.prot?'Под штапик':'По видимой части']);
+    const mount=c.includeBeadSides===false ? 'Под штапик' : f.beadSides===3 ? 'Под 3 штапика, без верхнего' : 'Под все 4 штапика';
+    const details=(f.rows||[]).map((r,i)=>[String(i+1),r.n,`${r.h} × ${r.w}`,String(r.q),r.bead||f.prot?mount:'По видимой части']);
     const spec={headers:['№','Помещение','Стекло, в × ш, см','Шт.','Монтаж'],rows:details.length?details:[['1','____________','______ × ______','___','____________']]};
     if(kind==='contract'){
       add('Стороны и предмет договора',[
@@ -24,7 +25,7 @@
         `Материал: ${material}. ${f.sell===0?'Материал предоставляет Заказчик. Количество, состояние и согласованная оценка переданного материала: '+field(s.contractExtra):'Материал предоставляет Исполнитель.'}`
       ]);
       add('Состав работ и материал',[
-        `Тариф: ${f.prot?'Защита — монтаж с заводкой под штапик':'Стандарт — по видимой части; монтаж под штапик только для отмеченных стёкол'}. Размеры указаны без технологического запаса. Площадь стекла: ${Number.isFinite(f.glass)?f.glass.toLocaleString('ru-RU',{maximumFractionDigits:3})+' м²':blank}.`,
+        `Тариф: ${f.prot?'Защита — '+(c.includeBeadSides===false?'монтаж с заводкой под штапик':mount.toLowerCase()):'Стандарт — по видимой части; '+(c.includeBeadSides===false?'монтаж под штапик':mount.toLowerCase())+' только для отмеченных стёкол'}. Размеры указаны без технологического запаса. Площадь стекла: ${Number.isFinite(f.glass)?f.glass.toLocaleString('ru-RU',{maximumFractionDigits:3})+' м²':blank}.`,
         `Согласованная оплачиваемая площадь: ${Number.isFinite(f.bill)?f.bill.toLocaleString('ru-RU',{maximumFractionDigits:3})+' м²':blank}. Цена материала за оплачиваемый м²: ${Number.isFinite(f.sell)?money(f.sell):blank}. Стоимость материала в расчёте: ${Number.isFinite(f.matRev)?money(f.matRev):blank}. Остальная часть цены включает работы и согласованные доплаты.`,
         'Спецификация в конце договора является его частью. Конкретный класс защиты, испытания, допустимость установки на данный стеклопакет и способ крепления подтверждаются документацией выбранного материала и системы монтажа. Наличие плёнки само по себе не означает неразбиваемость, пулестойкость или взрывостойкость остекления.'
       ]);

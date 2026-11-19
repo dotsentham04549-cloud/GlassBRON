@@ -31,6 +31,7 @@
     }
     function settings(s){
       plain(s); const out = copy(defaults);
+      if ('beadSides' in defaults && s.beadSides === undefined) out.beadSides='4';
       if (!Array.isArray(s.panes)) throw new Error('В расчёте отсутствует список стёкол.');
       for (const key of Object.keys(defaults)) if (s[key] !== undefined){
         if (key === 'panes') out[key] = panes(s[key]);
