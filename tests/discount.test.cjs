@@ -48,7 +48,7 @@ test('all inline scripts parse', () => {
   for (const script of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 });
 
-for (const tariff of ['std','prot']) for (const zone of ['city','suburb','region']){
+for (const tariff of ['std','opt','prot']) for (const zone of ['city','suburb','region']){
   test(`discount changes company profit, never master payment: ${tariff}/${zone}`, () => {
     const {api, elements} = app();
     api.reset({tariff, zone, minOrder:'10000', freeFrom:'20000', roundMode:'nearest',
@@ -133,9 +133,9 @@ test('three beads adjust only bead surcharge, not base work, material or cut all
  assert.equal(four.beadClient,400);assert.equal(three.beadClient,300);
  assert.equal(four.laborBead,650);assert.equal(three.laborBead,600);
  for(const k of ['labor','workP','matRev','m','glass','bill','beadBill'])assert.equal(three[k],four[k]);
- api.state.tariff='prot';assert.equal(api.figures().workP,1575);assert.equal(api.figures().beadRev,0);
- api.state.beadSides='4';assert.equal(api.figures().workP,1700);
- api.state.beadSides='3';api.state.bead3Factor='100';assert.equal(api.figures().workP,1700);assert.equal(api.figures().laborBead,650);
+ api.state.tariff='opt';assert.equal(api.figures().workP,1575);assert.equal(api.figures().beadRev,0);
+ api.state.tariff='prot';assert.equal(api.figures().workP,1700);
+ api.state.tariff='opt';api.state.bead3Factor='100';assert.equal(api.figures().workP,1700);assert.equal(api.figures().laborBead,650);
 });
 test('bead factor remains bounded; unmarked standard glass and master discount protection remain unchanged',()=>{
  const {api,elements}=app();
@@ -150,14 +150,34 @@ test('legacy snapshots and saved objects retain four beads and their old prices'
  const {api}=app();
  api.reset({tariff:'prot',beadSides:'4',panes:[{n:'Window',h:'100',w:'100',q:'1',bead:true}],minOrder:'0',freeFrom:'0',roundMode:'none'});
  const old=api.snapshot(),previous=api.figures().revenue;delete old.beadSides;delete old.bead3Factor;
- api.state.beadSides='3';assert.notEqual(api.figures().revenue,previous);
+ api.state.tariff='opt';assert.notEqual(api.figures().revenue,previous);
  api.withSnapshot(old,()=>{assert.equal(api.figures().beadSides,4);assert.equal(api.figures().revenue,previous);});
  api.restoreObject({panes:old.panes,tariff:'prot'});assert.equal(api.figures().beadSides,4);
 });
-test('customer documents specify three beads without top for both tariffs',()=>{
+test('customer documents specify the mounting method for each tariff',()=>{
  const {api,context}=app();
- for(const tariff of ['std','prot']){
+ for(const tariff of ['std','opt','prot']){
   api.reset({tariff,beadSides:'3',panes:[{n:'Window',h:'100',w:'100',q:'1',bead:true}]});
-  api.print('final');assert.ok(context.printed.output.includes('под 3 штапика, без верхнего'));
+  api.print('final');assert.ok(context.printed.output.includes(tariff==='prot'?'под все 4 штапика':'под 3 штапика, без верхнего'));
+  assert.ok(context.printed.output.includes('Тариф «'+api.figures().tariffName+'»'));
  }
+});
+
+test('three tariffs fix their mounting method and include optimal surcharge only once',()=>{
+ const {api}=app();
+ const panes=[{n:'Window',h:'100',w:'100',q:'1',bead:false}];
+ for(const [tariff,revenue,beads,rate,name] of [['std',2000,0,450,'Стандарт'],['opt',2375,1,600,'Оптимальный'],['prot',2500,1,650,'Защита']]){
+  api.reset({tariff,beadSides:tariff==='opt'?'4':'3',panes,minOrder:'0',freeFrom:'0',roundMode:'none'});
+  const f=api.figures();assert.equal(f.revenue,revenue);assert.equal(f.beads,beads);
+  assert.equal(beads?f.laborBead:f.labor,rate);assert.equal(f.beadRev,0);assert.equal(f.tariffName,name);
+ }
+ assert.equal((html.match(/<input type="radio" name="tariff"/g)||[]).length,3);
+ assert.ok(!html.includes('id="beadAll"'));assert.ok(!html.includes('class="mount-options"'));
+});
+
+test('the previous three-bead protection selection migrates to optimal at the same price',()=>{
+ const {api}=app();
+ api.reset({panes:[{n:'Window',h:'100',w:'100',q:'1',bead:false}],minOrder:'0',freeFrom:'0',roundMode:'none'});
+ api.restoreObject({tariff:'prot',beadSides:'3',panes:api.state.panes});
+ assert.equal(api.state.tariff,'opt');assert.equal(api.figures().revenue,2375);
 });

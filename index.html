@@ -77,7 +77,7 @@ textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 button:disabled{opacity:.45;cursor:default}
 a.btnlink{display:inline-flex;align-items:center;font-size:14px;font-weight:500;border-radius:4px;padding:9px 14px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);text-decoration:none}
 a.btnlink[aria-disabled=true]{opacity:.45;pointer-events:none}
-.tariffs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.tariffs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
 .tariffs label{display:block;cursor:pointer}
 .tariffs input{position:absolute;opacity:0;pointer-events:none}
 .tariffs span{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:4px;background:var(--field)}
@@ -310,11 +310,11 @@ button.x{box-shadow:none}
 @media(max-width:600px){.legal-preview{padding:12px}.legal-section h3{font-size:14px}.client-doc-choice .btns{display:flex;flex-wrap:wrap}}
 
 
-.mount-options{display:flex;gap:10px;align-items:end;margin:0 0 12px;flex-wrap:wrap}
-.mount-options label{flex:1 1 230px;min-width:0}.mount-options button{min-height:44px}
 .mount-note{display:block;margin-top:5px;font:12px/1.4 var(--sans);color:var(--muted);white-space:normal;overflow-wrap:anywhere}
 .doc .mount-note{font-size:7.5pt;color:#5E656B}
-@media(max-width:600px){.mount-options{display:grid;grid-template-columns:minmax(0,1fr)}.mount-options label{min-width:0}}
+.tariffs label{min-width:0}.tariffs span{height:100%;min-width:0}
+.tariffs em{font:12px/1.4 var(--sans);font-style:normal;color:var(--muted)}
+@media(max-width:600px){.tariffs{grid-template-columns:minmax(0,1fr)}.tariffs span{gap:4px}}
 
 /* ---------- print ---------- */
 #printArea{display:none}
@@ -434,11 +434,6 @@ button.x{box-shadow:none}
           </div>
         </section>        <section class="card">
           <h2 class="kicker">Стёкла, видимая часть, см</h2>
-          <div class="mount-options">
-            <label class="f">Монтаж под штапики для этого заказа<select data-s="beadSides"><option value="3">3 штапика — без верхнего</option><option value="4">Все 4 штапика</option></select></label>
-            <button id="beadAll" type="button">Отметить все стёкла</button>
-          </div>
-          <p class="note">Выбор действует на отмеченные стёкла. В тарифе «Защита» — на все. Для разных способов монтажа сохраните отдельные объекты.</p>
           <div class="tscroll">
             <table class="panes">
               <thead><tr><th>Помещение</th><th>Выс.</th><th>Шир.</th><th>Шт.</th><th title="Снять штапики и завести плёнку под них">Штап.</th><th style="text-align:right">м²</th><th></th></tr></thead>
@@ -482,12 +477,13 @@ button.x{box-shadow:none}
       <div class="grid"><div class="stack">        <section class="card">
           <h2 class="kicker">Стоимость и скидка</h2>
           <div class="tariffs" role="radiogroup" aria-label="Тариф">
-            <label><input type="radio" name="tariff" value="std"><span><b>Стандарт</b><small id="tStd"></small></span></label>
-            <label><input type="radio" name="tariff" value="prot"><span><b>Защита</b><small id="tProt"></small></span></label>
+            <label><input type="radio" name="tariff" value="std"><span><b>Стандарт</b><small id="tStd"></small><em>По видимой части стекла</em></span></label>
+            <label><input type="radio" name="tariff" value="opt"><span><b>Оптимальный</b><small id="tOpt"></small><em>3 штапика, без верхнего</em></span></label>
+            <label><input type="radio" name="tariff" value="prot"><span><b>Защита</b><small id="tProt"></small><em>Все 4 штапика</em></span></label>
           </div>
 <div class="fields"><label class="f">Скидка<input data-k="discountValue" inputmode="decimal" placeholder="0"></label><label class="f">Вид скидки<select data-s="discountMode"><option value="percent">В процентах, %</option><option value="rub">В рублях, ₽</option></select></label></div><details class="calculation-details"><summary>Тарифы, доплаты и округление</summary><div class="fields"><label class="f">Стандарт: работа, ₽/м²<input data-k="workPrice" inputmode="decimal"></label><label class="f">Защита: работа под 4 штапика, ₽/м²<input data-k="workProt" inputmode="decimal"></label><label class="f">Мин. площадь стекла, м²<input data-k="minArea" inputmode="decimal"></label><label class="f">Мин. заказ, ₽<input data-k="minOrder" inputmode="decimal"></label><label class="f">Под 4 штапика, ₽/створка<input data-k="beadClient" inputmode="decimal"></label><label class="f">Доп. работы, ₽<input data-k="extra" inputmode="decimal"></label><label class="f">Округление итога<select data-s="roundMode"><option value="none">Не округлять</option><option value="down">Вниз, в пользу клиента</option><option value="nearest">До ближайшего</option></select></label><label class="f">Шаг округления<select data-s="roundStep"><option value="10">10 ₽</option><option value="50">50 ₽</option><option value="100">100 ₽</option></select></label></div></details>
 <details class="calculation-details"><summary>Как считается цена и скидка</summary>          <p class="note">Скидка применяется к итогу после округления, включая выезд, и уменьшает прибыль компании. Оплата мастеру за работу, штапики и дорогу не меняется. Скидка считается до целого рубля, максимум — вся сумма заказа.</p>
-          <p class="note">«Стандарт» — штапики для отмеченных стёкол за отдельную доплату. «Защита» — монтаж всех стёкол под выбранные 3 или 4 штапика, он уже включён в ставку за м².</p>
+          <p class="note">«Стандарт» — штапики для отмеченных стёкол за отдельную доплату. «Оптимальный» — все стёкла под 3 штапика без верхнего. «Защита» — все стёкла под 4 штапика. В обоих тарифах монтаж включён в ставку за м².</p>
           <p class="note">Клиенту цена складывается из работы и материала (цена материала задаётся в блоке «Материал»). Стекло меньше минимальной площади считается как минимальная площадь — и для клиента, и для оплаты мастеру.</p>
         </details></section>        <section class="card">
           <h2 class="kicker">Выезд</h2>
@@ -620,10 +616,10 @@ button.x{box-shadow:none}
 <div id="printArea"></div>
 <div id="pdfBar" hidden role="status"><span id="pdfMsg"></span><button class="primary" id="pdfShare">Отправить</button><button id="pdfSave">Скачать</button><button class="x" id="pdfX" aria-label="Закрыть">×</button></div>
 
-<script src="client-documents.js?v=2"></script>
+<script src="client-documents.js?v=3"></script>
 <script>
 const KEY = 'film-calc-v2', OLDKEY = 'film-calc-v1', OBJS = 'film-calc-objects-v1';
-const HOUSE = [{n:'Гостиная',h:'140',w:'65',q:'2',bead:true},{n:'Кухня',h:'120',w:'50',q:'1',bead:true},{n:'Ванная',h:'25',w:'35',q:'1',bead:true}];
+const HOUSE = [{n:'Гостиная',h:'140',w:'65',q:'2',bead:false},{n:'Кухня',h:'120',w:'50',q:'1',bead:false},{n:'Ванная',h:'25',w:'35',q:'1',bead:false}];
 
 const DEFAULTS = {
   rollPrice:'18000', rollW:'1.52', rollL:'30', margin:'1', cons:'40', labor:'450', beadMaster:'200', laborBead:'650',
@@ -633,7 +629,7 @@ const DEFAULTS = {
   materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
   client:'', clientPhone:'', address:'', note:'', withScheme:false, splitLines:false,
   contractNo:"", contractCity:"Воронеж", contractStart:"", contractEnd:"", contractAdvance:"", contractPayment:"Остаток оплачивается после приёмки работ и подписания акта.", contractMaterial:"", contractFilmWarranty:"По документам поставщика на конкретный материал; документы передаются Заказчику.", contractDrying:"Ориентировочно до 60 дней по информации поставщика. Фактический срок зависит от условий; уточняется по инструкции к материалу.", contractFirstWash:"", contractActDate:"", contractReceived:"", contractDefects:"", contractExtra:"", contractSigner:"ИП Козленко Вадим Янович", contractEmail:"ds_allin@mail.ru", contractBank:"",
-  beadSides:'3', bead3Factor:'75',
+  beadSides:'4', bead3Factor:'75',
   discountMode:'percent', discountValue:'0',
   name:'', panes:HOUSE
 };
@@ -643,12 +639,15 @@ function restoreObject(o){
   OBJ_FIELDS.forEach(k => { if (o[k] !== undefined) state[k] = clone(o[k]); });
   state.beadSides = o.beadSides === '3' ? '3' : '4';
   state.bead3Factor = o.bead3Factor ?? DEFAULTS.bead3Factor;
+  if(state.tariff === 'prot' && state.beadSides === '3') state.tariff='opt';
   // Older objects have no discount; never carry a different client's discount over.
   state.discountMode = o.discountMode || DEFAULTS.discountMode;
   state.discountValue = o.discountValue ?? DEFAULTS.discountValue;
 }
 const OWN_MAT = {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'};
 function ensureMaterials(st){
+  // v25 used Protection + 3 beads for this exact price; retain it as Optimal.
+  if(st.tariff === 'prot' && st.beadSides === '3') st.tariff='opt';
   if (!Array.isArray(st.materials) || !st.materials.length){
     st.materials = [{id:'m1', name: st.material || 'Бронирующая плёнка 210 мкм, прозрачная', rollPrice: st.rollPrice || '18000', rollW: st.rollW || '1.52', rollL: st.rollL || '30', sell:'800'}, clone(OWN_MAT)];
   }
@@ -710,7 +709,7 @@ document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.a
 }));
 document.querySelectorAll('input[name="zone"]').forEach(rb => rb.addEventListener('change', () => { state.zone = rb.value; save(); schedule(true); }));
 $('splitLines').addEventListener('change', e => { state.splitLines = e.target.checked; save(); });
-document.querySelectorAll('input[name="tariff"]').forEach(rb => rb.addEventListener('change', () => { state.tariff = rb.value; save(); renderPanes(); schedule(); }));
+document.querySelectorAll('input[name="tariff"]').forEach(rb => rb.addEventListener('change', () => { state.tariff = rb.value; state.beadSides = rb.value === 'opt' ? '3' : '4'; save(); renderPanes(); schedule(); }));
 function syncInputs(){
   document.querySelectorAll('select[data-s]').forEach(el => el.value = state[el.dataset.s] ?? DEFAULTS[el.dataset.s]);
   document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.value = state[inp.dataset.k] ?? '');
@@ -721,13 +720,13 @@ function syncInputs(){
 }
 
 function renderPanes(){
-  const tb = $('panes'), prot = state.tariff === 'prot';
+  const tb = $('panes'), prot = ['opt','prot'].includes(state.tariff);
   tb.innerHTML = state.panes.map((p,i) => `<tr>
       <td class="nm" data-label="Помещение"><input data-i="${i}" data-f="n" aria-label="Помещение" value="${esc(p.n)}"></td>
       <td data-label="Высота, см"><input inputmode="decimal" data-i="${i}" data-f="h" aria-label="Высота, см" value="${esc(p.h)}"></td>
       <td data-label="Ширина, см"><input inputmode="decimal" data-i="${i}" data-f="w" aria-label="Ширина, см" value="${esc(p.w)}"></td>
       <td data-label="Количество"><input inputmode="numeric" data-i="${i}" data-f="q" aria-label="Количество" value="${esc(p.q)}"></td>
-      <td class="c" data-label="Под штапик"><input type="checkbox" data-bead="${i}" aria-label="Снимать штапики" ${p.bead || prot ? 'checked' : ''} ${prot ? 'disabled title="В тарифе «Защита» все стёкла под штапик"' : ''}></td>
+      <td class="c" data-label="Под штапик"><input type="checkbox" data-bead="${i}" aria-label="Снимать штапики" ${p.bead || prot ? 'checked' : ''} ${prot ? 'disabled title="В выбранном тарифе монтаж под штапики включён для всех стёкол"' : ''}></td>
       <td class="area" data-label="Площадь" id="a${i}"></td>
       <td class="remove-glass"><button class="x" data-del="${i}" aria-label="Удалить строку">✕</button></td></tr>`).join('');
   tb.querySelectorAll('input[data-f]').forEach(inp => inp.addEventListener('input', () => {
@@ -759,10 +758,9 @@ $('matDel').addEventListener('click', () => {
   if (state.materials.length <= 1 || !confirm(`Удалить материал «${mat().name}»?`)) return;
   state.materials = state.materials.filter(m => m.id !== state.matId); state.matId = state.materials[0].id; save(); renderMat(); schedule();
 });
-document.querySelectorAll('select[data-s]').forEach(el => el.addEventListener('change', () => { state[el.dataset.s] = el.value; save(); if(el.dataset.s === 'beadSides') renderPanes(); schedule(); }));
-$('beadAll').addEventListener('click', () => {state.panes.forEach(p=>p.bead=true);save();renderPanes();schedule(true);});
+document.querySelectorAll('select[data-s]').forEach(el => el.addEventListener('change', () => { state[el.dataset.s] = el.value; save(); schedule(); }));
 $('add').addEventListener('click', () => {
-  state.panes.push({n:'',h:'',w:'',q:'1',bead:true}); save(); renderPanes(); schedule();
+  state.panes.push({n:'',h:'',w:'',q:'1',bead:false}); save(); renderPanes(); schedule();
   const ins = document.querySelectorAll('#panes input[data-f="n"]'); ins[ins.length-1]?.focus();
 });
 $('reset').addEventListener('click', () => {
@@ -862,7 +860,7 @@ function pasteShow(text, name, meta){
 }
 function pasteApply(replace){
   if (!pasteParsed || !pasteParsed.items.length) return;
-  const rows = pasteParsed.items.map(i => ({n:i.n, h:cmStr(i.h), w:cmStr(i.w), q:String(i.q), bead:true}));
+  const rows = pasteParsed.items.map(i => ({n:i.n, h:cmStr(i.h), w:cmStr(i.w), q:String(i.q), bead:false}));
   if (replace){
     state.panes = rows;
     state.discountMode = DEFAULTS.discountMode; state.discountValue = DEFAULTS.discountValue;
@@ -951,7 +949,7 @@ function expand(W, m){
   state.panes.forEach(p => {
     const w = num(p.w), h = num(p.h), q = Math.max(0, Math.round(num(p.q)));
     if (w <= 0 || h <= 0 || q <= 0) return;
-    const name = (p.n || '').trim() || 'Стекло', beadSides = (p.bead || state.tariff === 'prot') ? (state.beadSides === '3' ? 3 : 4) : 0;
+    const name = (p.n || '').trim() || 'Стекло', beadSides = (p.bead || ['opt','prot'].includes(state.tariff)) ? (state.tariff === 'opt' ? 3 : state.tariff === 'prot' ? 4 : state.beadSides === '3' ? 3 : 4) : 0;
     for (let k = 0; k < q; k++){
       const label = q > 1 ? `${name} ${k+1}` : name;
       const a = w + 2*m, b = h + 2*m, size = `${fmtDimension(h)}×${fmtDimension(w)}`;
@@ -1076,8 +1074,9 @@ let timer = null, lastLayout = null, lastKey = '', pendingKey = '';
 function schedule(soft){ clearTimeout(timer); timer = setTimeout(() => compute(soft), 220); }
 
 function figures(){
-  const M = mat(), rollPrice = num(M.rollPrice), Wm = num(M.rollW), Lm = num(M.rollL), sell = num(M.sell), prot = state.tariff === 'prot';
-  const beadSides = state.beadSides === '3' ? 3 : 4, beadFactor = beadSides === 3 ? Math.min(100,Math.max(0,num(state.bead3Factor ?? 75)))/100 : 1;
+  const M = mat(), rollPrice = num(M.rollPrice), Wm = num(M.rollW), Lm = num(M.rollL), sell = num(M.sell), optimal = state.tariff === 'opt', prot = optimal || state.tariff === 'prot';
+  const tariffName = optimal ? 'Оптимальный' : prot ? 'Защита' : 'Стандарт';
+  const beadSides = optimal ? 3 : prot ? 4 : state.beadSides === '3' ? 3 : 4, beadFactor = beadSides === 3 ? Math.min(100,Math.max(0,num(state.bead3Factor ?? 75)))/100 : 1;
   const beadLabel = beadSides === 3 ? 'под 3 штапика, без верхнего' : 'под все 4 штапика';
   const workP = prot ? num(state.workPrice)+(num(state.workProt)-num(state.workPrice))*beadFactor : num(state.workPrice);
   const m = Math.max(0, num(state.margin)), cons = num(state.cons), labor = num(state.labor);
@@ -1102,7 +1101,7 @@ function figures(){
   const masterTravel = zone === 'city' ? 0 : travel * num(state.masterPct) / 100;
   // Keep work, minimum order and travel unchanged: they determine the master's pay.
   const rounded = rounding(work + travel);
-  return {M, prot, beadSides, beadFactor, beadLabel, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient, laborBead, beadBill,
+  return {M, prot, optimal, tariffName, beadSides, beadFactor, beadLabel, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient, laborBead, beadBill,
     glass, bill, smallCount, beads, count, rows, beadRev, areaRev, raw, work, topUp, zone, travel, travelNote, masterTravel,
     exact: work + travel, ...rounded, ...discounted(rounded.revenue)};
 }
@@ -1122,10 +1121,13 @@ function rounding(v){
 }
 
 function tariffLabels(){
-  const sell = num(mat().sell), st = $('tStd'), pr = $('tProt');
-  if (st) st.textContent = `${fmt(num(state.workPrice) + sell)} ₽/м²`;
-  if (pr){ const F=figures(); pr.textContent = `${fmt(num(state.workPrice)+(num(state.workProt)-num(state.workPrice))*F.beadFactor+sell)} ₽/м² · ${F.beadSides} штапика`; }
+  const sell=num(mat().sell), base=num(state.workPrice), extra=num(state.workProt)-base;
+  const factor=Math.min(100,Math.max(0,num(state.bead3Factor ?? 75)))/100;
+  $('tStd').textContent=`${fmt(base+sell)} ₽/м²`;
+  $('tOpt').textContent=`${fmt(base+extra*factor+sell)} ₽/м²`;
+  $('tProt').textContent=`${fmt(num(state.workProt)+sell)} ₽/м²`;
 }
+
 function compute(soft){
   tariffLabels();
   const F = figures();
@@ -1186,7 +1188,7 @@ function renderSummary(F, L, seams, Wcm){
     <h2 class="kicker">Итог${state.name ? ' · ' + esc(state.name) : ''}</h2>
     <div class="total-label">Цена клиенту</div>
     <div class="total">${rub(F.revenue)}</div>
-    <p class="sub">${fmt(F.glass,2)} м² стекла · тариф «${F.prot ? 'Защита' : 'Стандарт'}» · к оплате ${fmt(F.bill,2)} м² × (работа ${fmt(F.workP)} + материал ${fmt(F.sell)}) ₽${F.beads ? ` · ${F.beadLabel}: ${F.beads} стёкол` : ''}${F.travel ? ` · выезд ${rub(F.travel)}` : ''}</p>
+    <p class="sub">${fmt(F.glass,2)} м² стекла · тариф «${F.tariffName}» · к оплате ${fmt(F.bill,2)} м² × (работа ${fmt(F.workP)} + материал ${fmt(F.sell)}) ₽${F.beads ? ` · ${F.beadLabel}: ${F.beads} стёкол` : ''}${F.travel ? ` · выезд ${rub(F.travel)}` : ''}</p>
     <div class="kpis">
       <div class="kpi"><span>Прибыль</span><strong class="${profit>=0?'pos':'neg'}">${pend(rub(profit))}</strong></div>
       <div class="kpi"><span>Маржа</span><strong class="${profit>=0?'pos':'neg'}">${pend(fmt(marginPct*100) + '%')}</strong></div>
@@ -1392,7 +1394,7 @@ function printClient(rec, kind){
   const why = final ? [] : String(state.why || '').split('\n').map(t => t.trim()).filter(Boolean).map(t => F.beadSides === 3 && t.includes('ударной волне') ? 'Способ монтажа и свойства выбранной плёнки указываются в документах' : t);
   const html = `<div class="doc"><div style="max-width:182mm">${docHead(final ? 'Заказ-наряд' : 'Предварительный расчёт', rec)}
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 2px"><h2 style="margin:0">Бронирование стёкол защитной плёнкой</h2></div>
-    <p class="lead">Тариф «${F.prot ? 'Защита' : 'Стандарт'}»${F.prot ? ' — '+F.beadLabel : ' — оклейка по видимой части стекла'} · ${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · ${split ? `работа ${fmt(F.workP)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}` : `${fmt(perM2)} ₽/м² с материалом`}</p>
+    <p class="lead">Тариф «${F.tariffName}»${F.prot ? ' — '+F.beadLabel : ' — оклейка по видимой части стекла'} · ${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · ${split ? `работа ${fmt(F.workP)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}` : `${fmt(perM2)} ₽/м² с материалом`}</p>
     ${facts.length ? `<dl class="facts">${facts.map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>` : ''}
     <table class="receipt"><thead><tr><th>№</th><th>Помещение</th><th class="r">Размер, см<br>в × ш</th><th class="r">Кол-во</th><th class="r">Площадь, м²</th><th class="r">К оплате, м²</th><th class="r">Сумма, ₽</th></tr></thead>
       <tbody>${glassRows}</tbody>
@@ -1715,7 +1717,7 @@ window.BronCloudBridge = {
 };
 </script>
 <script src="cloud-sync-core.js?v=1"></script>
-<script src="cloud-data.js?v=3"></script>
+<script src="cloud-data.js?v=4"></script>
 <script src="yandex-disk.js?v=1"></script>
 <script src="cloud-sync.js?v=1"></script>
 <script>

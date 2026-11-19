@@ -16,7 +16,7 @@ function app(){
   vm.runInContext(setup+'\n'+functions.map(source).join('\n')+'\n'+html.match(/^function makeNo\(d\).*$/m)[0]+`
     const BAND=750, BAND_MM=268;
     let lastLayout;
-    globalThis.api={cutSize,cutSizes,label,cutTable,printCut,masterScheme,
+    globalThis.api={cutSize,cutSizes,label,cutTable,printCut,masterScheme,setTariff(value){state.tariff=value;},
       layout(pane,margin,orientation=1){
         state.panes=[pane];state.margin=String(margin);
         const expanded=expand(152,margin);
@@ -106,6 +106,7 @@ test('master printing skips unoccupied gaps and ignores unused total roll length
 
 test('master cutting labels include three beads and free top without changing glass dimensions',()=>{
  const {api,context}=app();
+ api.setTariff('opt');
  const L=api.layout({...glass,bead:true},1,2),p=L.placed[0];
  assert.equal(p.beadSides,3);assert.equal(api.cutSize(p),'142 × 67');
  assert.ok(api.cutSizes(p).includes('верх без заводки'));

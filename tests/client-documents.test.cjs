@@ -67,4 +67,8 @@ test('mounting mode survives cloud sync while legacy settings keep four beads',(
  const ctx={settings:s,figures:{prot:true,beadSides:3,rows:[{n:'Room',h:100,w:100,q:1}]}};
  assert.ok(D.render(D.model('contract',ctx)).includes('Под 3 штапика, без верхнего'));
  assert.ok(!D.render(D.model('contract',{...ctx,includeBeadSides:false})).includes('3 штапика'));
+ ctx.figures.optimal=true;
+ assert.ok(D.render(D.model('contract',ctx)).includes('Оптимальный'));
+ const migrated=tools.snapshot({settings:{...s,tariff:'prot',beadSides:'3'},objects:{},orders:[]});
+ assert.equal(migrated.settings.tariff,'opt');
 });

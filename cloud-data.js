@@ -41,6 +41,7 @@
           out[key] = s[key];
         }else out[key] = text(s[key]);
       }
+      if(out.tariff === 'prot' && out.beadSides === '3') out.tariff='opt';
       return out;
     }
     function object(o){
