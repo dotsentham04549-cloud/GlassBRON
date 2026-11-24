@@ -28,7 +28,7 @@ function app(){
   vm.runInContext(setup + '\n' + makeNo + '\n' + names.map(functionSource).join('\n') + `
     globalThis.api = {
       get state(){ return state; },
-      reset(patch = {}){ state = Object.assign(clone(DEFAULTS), patch); },
+      reset(patch = {}){ state = Object.assign(clone(DEFAULTS), {cityBundled:false}, patch); },
       active(patch = {}){ state = ensureMaterials(Object.assign(clone(DEFAULTS), patch)); },
       figures, snapshot, withSnapshot, restoreObject,
       summary(){ const F = figures(); renderSummary(F, {total:400}, 0, F.Wm * 100); },
@@ -185,9 +185,9 @@ test('active saved calculations and objects use four beads at the full existing 
   api.active({...patch,tariff,beadSides:'3',bead3Factor:'0'});
   assert.equal(api.state.tariff,tariff==='std'?'std':'prot');
   assert.equal(api.figures().beadSides,4);assert.equal(api.figures().laborBead,650);
-  assert.equal(api.figures().revenue,tariff==='std'?2400:2500);
+  assert.equal(api.figures().revenue,tariff==='std'?3200:3300);
   api.restoreObject({tariff,beadSides:'3',bead3Factor:'0',panes:patch.panes});
-  assert.equal(api.figures().beadSides,4);assert.equal(api.figures().revenue,tariff==='std'?2400:2500);
+  assert.equal(api.figures().beadSides,4);assert.equal(api.figures().revenue,tariff==='std'?3200:3300);
  }
 });
 
@@ -196,10 +196,56 @@ test('issued three-bead documents retain their original amounts and do not alter
  const patch={panes:[{n:'Window',h:'100',w:'100',q:'1',bead:true}],minOrder:'0',freeFrom:'0',roundMode:'none'};
  api.active({...patch,tariff:'prot'});
  for(const [tariff,total] of [['std',2300],['opt',2375],['prot',2375]]){
-  api.withSnapshot({...api.snapshot(),tariff,beadSides:'3',bead3Factor:'75'},()=>{
+  api.withSnapshot({...api.snapshot(),tariff,beadSides:'3',bead3Factor:'75',cityBundled:false},()=>{
    assert.equal(api.figures().revenue,total);api.print('final');
    assert.ok(context.printed.output.includes('под 3 штапика, без верхнего'));
   });
-  assert.equal(api.state.tariff,'prot');assert.equal(api.figures().revenue,2500);
+  assert.equal(api.state.tariff,'prot');assert.equal(api.figures().revenue,3300);
+ }
+});
+
+test('city allowance is included exactly once on small and large jobs regardless of the old threshold',()=>{
+ const {api,context}=app();
+ for(const tariff of ['std','prot']) for(const q of [1,6]){
+  api.active({tariff,panes:[{n:'Window',h:'100',w:'100',q:String(q),bead:false}],minOrder:'0',roundMode:'none',freeFrom:'999999'});
+  const f=api.figures(),rate=tariff==='std'?2000:2500;
+  assert.equal(f.revenue,rate*q+800);assert.equal(f.travel,0);assert.equal(f.cityIncluded,800);
+  assert.ok(Math.abs(f.clientPrice*q-f.revenue)<1e-8);
+  api.state.freeFrom='0';assert.equal(api.figures().revenue,f.revenue);
+  for(const kind of ['prelim','final']){
+   api.print(kind);const out=context.printed.output;
+   assert.ok(out.includes('Выезд мастера по городу</td><td class="r m">бесплатно'));
+   assert.ok(!out.includes('В стоимости работ заложено'));
+  }
+ }
+ assert.ok(!html.includes('data-k="freeFrom"'));
+});
+
+test('city inclusion follows minimum order, then rounding and discount, without changing master pay',()=>{
+ const {api,elements}=app();
+ const patch={tariff:'prot',panes:[{n:'Window',h:'100',w:'100',q:'1',bead:false}],minOrder:'3000',roundMode:'none'};
+ api.active(patch);api.summary();const master=masterPayment(elements.get('result').innerHTML);
+ assert.equal(api.figures().revenue,3800);assert.equal(api.figures().topUp,500);
+ api.state.discountValue='10';assert.equal(api.figures().revenue,3420);api.summary();assert.equal(masterPayment(elements.get('result').innerHTML),master);
+ api.state.cityFee='825';api.state.roundMode='down';assert.equal(api.figures().beforeDiscount,3800);
+ api.reset({...patch,freeFrom:'0'});api.summary();assert.equal(masterPayment(elements.get('result').innerHTML),master);
+});
+
+test('changing zone replaces the included city allowance with the existing suburban or regional fee',()=>{
+ const {api}=app();
+ api.active({panes:[{n:'Window',h:'100',w:'100',q:'1'}],minOrder:'0',roundMode:'none'});
+ for(const [zone,expected,travel] of [['city',2800,0],['suburb',3250,1250],['region',5500,3500],['city',2800,0]]){
+  api.state.zone=zone;const f=api.figures();assert.equal(f.revenue,expected);assert.equal(f.travel,travel);assert.equal(f.cityIncluded,zone==='city'?800:0);
+ }
+ api.state.matId='own';assert.equal(api.figures().revenue,2000);assert.equal(api.figures().clientWorkP,2000);
+});
+
+test('pre-change city documents retain the old threshold and total when reprinted',()=>{
+ const {api}=app();
+ for(const q of [1,6]){
+  api.active({panes:[{n:'Window',h:'100',w:'100',q:String(q)}],minOrder:'0',roundMode:'none'});
+  const snap=api.snapshot();delete snap.cityBundled;
+  api.withSnapshot(snap,()=>{const f=api.figures();assert.equal(f.revenue,q===1?2800:12000);assert.equal(f.cityIncluded,0);assert.equal(f.travel,q===1?800:0);});
+  assert.equal(api.figures().revenue,q*2000+800);
  }
 });

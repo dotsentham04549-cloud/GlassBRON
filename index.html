@@ -492,12 +492,12 @@ button.x{box-shadow:none}
             <label><input type="radio" name="zone" value="region"> Область, по км</label>
           </div>
           <div class="fields" style="margin-top:14px">
-            <label class="f">Бесплатно по городу от, ₽<input data-k="freeFrom" inputmode="decimal"></label>
-            <label class="f">Выезд по городу, ₽<input data-k="cityFee" inputmode="decimal"></label>
+            <label class="f">Заложено в работы по городу, ₽<input data-k="cityFee" inputmode="decimal"></label>
             <label class="f">Пригород, ₽<input data-k="suburbFee" inputmode="decimal"></label>
             <label class="f">Область, ₽/км<input data-k="perKm" inputmode="decimal"></label>
             <label class="f" id="kmField">В одну сторону, км<input data-k="km" inputmode="decimal"></label>
           </div>
+          <p class="note">В городе эта сумма всегда включается в стоимость работ, независимо от размера заказа. Для клиента выезд бесплатный, отдельно не оплачивается. Пригород и область считаются отдельно.</p>
         </section></div><aside class="card" id="result"></aside></div>
       <div class="btns next-step"><button class="primary" data-go="docs">К документам →</button><button data-go="settings">Материал и оплата мастеру</button></div>
     </section>
@@ -614,7 +614,7 @@ button.x{box-shadow:none}
 <div id="printArea"></div>
 <div id="pdfBar" hidden role="status"><span id="pdfMsg"></span><button class="primary" id="pdfShare">Отправить</button><button id="pdfSave">Скачать</button><button class="x" id="pdfX" aria-label="Закрыть">×</button></div>
 
-<script src="client-documents.js?v=3"></script>
+<script src="client-documents.js?v=4"></script>
 <script>
 const KEY = 'film-calc-v2', OLDKEY = 'film-calc-v1', OBJS = 'film-calc-objects-v1';
 const HOUSE = [{n:'Гостиная',h:'140',w:'65',q:'2',bead:false},{n:'Кухня',h:'120',w:'50',q:'1',bead:false},{n:'Ванная',h:'25',w:'35',q:'1',bead:false}];
@@ -622,7 +622,7 @@ const HOUSE = [{n:'Гостиная',h:'140',w:'65',q:'2',bead:false},{n:'Кух
 const DEFAULTS = {
   rollPrice:'18000', rollW:'1.52', rollL:'30', margin:'1', cons:'40', labor:'450', beadMaster:'200', laborBead:'650',
   price:'1650', minArea:'0.5', minOrder:'3000', beadClient:'400', extra:'0',
-  zone:'city', freeFrom:'5000', cityFee:'800', suburbFee:'1250', perKm:'35', km:'50', masterPct:'60',
+  zone:'city', freeFrom:'5000', cityFee:'800', cityBundled:true, suburbFee:'1250', perKm:'35', km:'50', masterPct:'60',
   company:'ALL IN', phone:'8 (930) 411-35-35', site:'allinvrn.ru', req:'ИП Козленко Вадим Янович · ИНН 366608254704 · ОГРНИП 323366800025631 · 394000, г. Воронеж, ул. Антонова-Овсеенко, д. 15А, к. 1', material:'Бронирующая плёнка 210 мкм, прозрачная', validDays:'14', roundMode:'down', roundStep:'100', formUrl:'', formMsg:'Здравствуйте! Это студия ALL IN. Заполните, пожалуйста, короткую анкету — по ней подготовим предварительный расчёт бронирования стёкол:', workPrice:'1200', workProt:'1700', tariff:'std', why:'Работаем официально: договор, заказ-наряд, акт, оплата по счёту\nПисьменная гарантия на работу\nБронирующая плёнка 210 мкм — толщина указана в документах\nТариф «Защита»: плёнка заводится под штапик и удерживает стекло в раме при ударной волне\nРаботаем бригадой мастеров — объект закрываем быстро и целиком\nСтудия в Воронеже, более 10 лет работы', matId:'m1',
   materials:[{id:'m1', name:'Бронирующая плёнка 210 мкм, прозрачная', rollPrice:'18000', rollW:'1.52', rollL:'30', sell:'800'}, {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'}],
   client:'', clientPhone:'', address:'', note:'', withScheme:false, splitLines:false,
@@ -639,6 +639,7 @@ function restoreObject(o){
   state.bead3Factor = o.bead3Factor ?? DEFAULTS.bead3Factor;
   if(state.tariff === 'opt') state.tariff='prot';
   state.beadSides='4';
+  state.cityBundled=true;
   // Older objects have no discount; never carry a different client's discount over.
   state.discountMode = o.discountMode || DEFAULTS.discountMode;
   state.discountValue = o.discountValue ?? DEFAULTS.discountValue;
@@ -651,6 +652,7 @@ function ensureMaterials(st, historical = false){
   }else{
     if(st.tariff === 'opt') st.tariff='prot';
     st.beadSides='4';
+    st.cityBundled=true;
   }
   if (!Array.isArray(st.materials) || !st.materials.length){
     st.materials = [{id:'m1', name: st.material || 'Бронирующая плёнка 210 мкм, прозрачная', rollPrice: st.rollPrice || '18000', rollW: st.rollW || '1.52', rollL: st.rollL || '30', sell:'800'}, clone(OWN_MAT)];
@@ -1096,16 +1098,18 @@ function figures(){
     }
   });
   const beadRev = prot ? 0 : beads * beadClient, areaRev = bill * price, workRev = bill * workP, matRev = bill * sell;
-  const raw = areaRev + beadRev + extra, work = Math.max(raw, minOrder), topUp = work - raw;
+  const raw = areaRev + beadRev + extra, workBase = Math.max(raw, minOrder), topUp = workBase - raw;
   const zone = state.zone || 'city';
+  const cityBundled = state.cityBundled === true, cityIncluded = zone === 'city' && cityBundled && bill > 0 ? Math.max(0,num(state.cityFee)) : 0;
+  const work = workBase + cityIncluded, clientWorkP = workP + (bill > 0 ? cityIncluded / bill : 0), clientPrice = clientWorkP + sell;
   let travel = 0, travelNote = '';
-  if (zone === 'city'){ const ff = num(state.freeFrom); travel = work >= ff ? 0 : num(state.cityFee); travelNote = travel ? `заказ меньше ${rub(ff)}` : 'бесплатно'; }
+  if (zone === 'city'){ const ff = num(state.freeFrom); travel = cityBundled || work >= ff ? 0 : num(state.cityFee); travelNote = travel ? `заказ меньше ${rub(ff)}` : 'бесплатно'; }
   else if (zone === 'suburb'){ travel = num(state.suburbFee); travelNote = 'пригород'; }
   else { const km = num(state.km); travel = km * 2 * num(state.perKm); travelNote = `${fmt(km)} км × 2 × ${fmt(num(state.perKm))} ₽`; }
   const masterTravel = zone === 'city' ? 0 : travel * num(state.masterPct) / 100;
   // Keep work, minimum order and travel unchanged: they determine the master's pay.
   const rounded = rounding(work + travel);
-  return {M, prot, optimal, tariffName, beadSides, beadFactor, beadLabel, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient, laborBead, beadBill,
+  return {M, cityBundled, cityIncluded, clientWorkP, clientPrice, prot, optimal, tariffName, beadSides, beadFactor, beadLabel, sell, workP, workRev, matRev, rollPrice, Wm, Lm, m, cons, labor, price, minArea, minOrder, extra, beadMaster, beadClient, laborBead, beadBill,
     glass, bill, smallCount, beads, count, rows, beadRev, areaRev, raw, work, topUp, zone, travel, travelNote, masterTravel,
     exact: work + travel, ...rounded, ...discounted(rounded.revenue)};
 }
@@ -1190,7 +1194,7 @@ function renderSummary(F, L, seams, Wcm){
     <h2 class="kicker">Итог${state.name ? ' · ' + esc(state.name) : ''}</h2>
     <div class="total-label">Цена клиенту</div>
     <div class="total">${rub(F.revenue)}</div>
-    <p class="sub">${fmt(F.glass,2)} м² стекла · тариф «${F.tariffName}» · к оплате ${fmt(F.bill,2)} м² × (работа ${fmt(F.workP)} + материал ${fmt(F.sell)}) ₽${F.beads ? ` · ${F.beadLabel}: ${F.beads} стёкол` : ''}${F.travel ? ` · выезд ${rub(F.travel)}` : ''}</p>
+    <p class="sub">${fmt(F.glass,2)} м² стекла · тариф «${F.tariffName}» · к оплате ${fmt(F.bill,2)} м² × (работа ${fmt(F.clientWorkP)} + материал ${fmt(F.sell)}) ₽${F.beads ? ` · ${F.beadLabel}: ${F.beads} стёкол` : ''}${F.travel ? ` · выезд ${rub(F.travel)}` : ''}</p>
     <div class="kpis">
       <div class="kpi"><span>Прибыль</span><strong class="${profit>=0?'pos':'neg'}">${pend(rub(profit))}</strong></div>
       <div class="kpi"><span>Маржа</span><strong class="${profit>=0?'pos':'neg'}">${pend(fmt(marginPct*100) + '%')}</strong></div>
@@ -1208,6 +1212,7 @@ function renderSummary(F, L, seams, Wcm){
       ${F.beadBill ? `<div class="ind"><span>${F.beadLabel}</span><span>${fmt(F.beadBill,2)} м² × ${fmt(F.laborBead)} = ${rub(laborBead)}</span></div>` : ''}
       ${F.masterTravel ? `<div class="ind"><span>дорога</span><span>${rub(F.masterTravel)}</span></div>` : ''}
       ${Math.abs(F.roundDiff) >= 0.5 ? `<div><span>Округление</span><span>${F.roundDiff > 0 ? '+' : '−'}${rub(Math.abs(F.roundDiff))}</span></div>` : ''}
+      ${F.cityIncluded ? `<div><span>В стоимости работ заложено на городской выезд</span><span>${rub(F.cityIncluded)}</span></div>` : ''}
       <div><span>Выезд клиенту</span><span>${F.travel ? rub(F.travel) : '0 ₽'} · ${F.travelNote}</span></div>
       ${F.discount > 0 ? `<div><span>До скидки</span><span>${rub(F.beforeDiscount)}</span></div><div><span>${F.discountLabel}</span><span>−${rub(F.discount)}</span></div>` : ''}
       <div><span>Наценка</span><span>${pend('×' + fmt(F.revenue / Math.max(cost,1),1))}</span></div>
@@ -1375,11 +1380,11 @@ function printClient(rec, kind){
   const F = figures();
   let n = 0;
   const glassRows = F.rows.map(r => {
-    const billA = Math.max(r.a, F.minArea) * r.q, sum = billA * F.price + (r.bead ? r.q * F.beadClient : 0);
+    const billA = Math.max(r.a, F.minArea) * r.q, sum = billA * F.clientPrice + (r.bead ? r.q * F.beadClient : 0);
     return `<tr class="avoid"><td class="m">${++n}</td><td>${esc(r.n)}${r.bead ? '<div class="sm">' + esc(F.beadLabel) + ' +' + fmt(F.beadClient) + ' ₽' + (r.q > 1 ? ' × ' + r.q : '') + '</div>' : F.prot ? '<div class="sm">'+esc(F.beadLabel)+'</div>' : ''}</td>
       <td class="r m">${fmtS(r.h)} × ${fmtS(r.w)}</td><td class="r m">${r.q}</td><td class="r m">${fmt(r.a*r.q,2)}${r.a < F.minArea ? '*' : ''}</td><td class="r m">${fmt(billA,2)}</td><td class="r m">${fmt(Math.round(sum))}</td></tr>`;
   }).join('');
-  const linesSum = F.areaRev + F.beadRev;
+  const linesSum = F.areaRev + F.beadRev + F.cityIncluded;
   const extra = [];
   if (F.extra) extra.push(['Дополнительные работы', F.extra]);
   if (F.topUp > 0) extra.push(['Доплата до минимальной стоимости заказа', F.topUp]);
@@ -1387,16 +1392,16 @@ function printClient(rec, kind){
   if (F.discount > 0){ extra.push(['Сумма до скидки', F.beforeDiscount]); extra.push([F.discountLabel, -F.discount]); }
   const facts = [['Исполнитель', [state.company, state.req].filter(Boolean).join(' · ')], ['Заказчик', state.client], ['Телефон заказчика', state.clientPhone], ['Адрес объекта', state.address], ['Примечание', state.note], ['Материал', F.M.name]].filter(r => (r[1]||'').trim());
   const own = F.sell <= 0;
-  const split = own || !!state.splitLines, perM2 = F.workP + F.sell;
+  const split = own || !!state.splitLines, perM2 = F.clientPrice;
   const breakdown = split
-    ? [[`Работа по оклейке${F.prot ? ' '+F.beadLabel : ''} · ${fmt(F.bill,2)} м² × ${fmt(F.workP)} ₽`, F.workRev],
+    ? [[`Работа по оклейке${F.prot ? ' '+F.beadLabel : ''} · ${fmt(F.bill,2)} м² × ${fmt(F.clientWorkP,2)} ₽`, F.workRev + F.cityIncluded],
        own ? ['Материал предоставлен заказчиком', null] : [`Материал · ${fmt(F.bill,2)} м² × ${fmt(F.sell)} ₽`, F.matRev]]
-    : [[`Бронирование стёкол${F.prot ? ' '+F.beadLabel : ''}, материал и работа · ${fmt(F.bill,2)} м² × ${fmt(perM2)} ₽`, F.workRev + F.matRev]];
+    : [[`Бронирование стёкол${F.prot ? ' '+F.beadLabel : ''}, материал и работа · ${fmt(F.bill,2)} м² × ${fmt(perM2,2)} ₽`, F.workRev + F.matRev + F.cityIncluded]];
   if (F.beads && !F.prot) breakdown.push([`Монтаж ${F.beadLabel} · ${F.beads} × ${fmt(F.beadClient)} ₽`, F.beadRev]);
   const why = final ? [] : String(state.why || '').split('\n').map(t => t.trim()).filter(Boolean).map(t => F.beadSides === 3 && t.includes('ударной волне') ? 'Способ монтажа и свойства выбранной плёнки указываются в документах' : t);
   const html = `<div class="doc"><div style="max-width:182mm">${docHead(final ? 'Заказ-наряд' : 'Предварительный расчёт', rec)}
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 2px"><h2 style="margin:0">Бронирование стёкол защитной плёнкой</h2></div>
-    <p class="lead">Тариф «${F.tariffName}»${F.prot ? ' — '+F.beadLabel : ' — оклейка по видимой части стекла'} · ${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · ${split ? `работа ${fmt(F.workP)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}` : `${fmt(perM2)} ₽/м² с материалом`}</p>
+    <p class="lead">Тариф «${F.tariffName}»${F.prot ? ' — '+F.beadLabel : ' — оклейка по видимой части стекла'} · ${F.count} ${plural(F.count,'стекло','стекла','стёкол')} · ${fmt(F.glass,2)} м² · ${split ? `работа ${fmt(F.clientWorkP,2)} ₽/м²${own ? ', материал заказчика' : ` + материал ${fmt(F.sell)} ₽/м²`}` : `${fmt(perM2,2)} ₽/м² с материалом`}</p>
     ${facts.length ? `<dl class="facts">${facts.map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>` : ''}
     <table class="receipt"><thead><tr><th>№</th><th>Помещение</th><th class="r">Размер, см<br>в × ш</th><th class="r">Кол-во</th><th class="r">Площадь, м²</th><th class="r">К оплате, м²</th><th class="r">Сумма, ₽</th></tr></thead>
       <tbody>${glassRows}</tbody>
@@ -1477,7 +1482,7 @@ function newOrder(kind){
   list.unshift(rec); saveOrders(list); renderOrders(); return rec;
 }
 function withSnapshot(snap, fn){
-  const keep = state; state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined, beadSides:'4'}, clone(snap)), true);
+  const keep = state; state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined, beadSides:'4', cityBundled:false}, clone(snap)), true);
   try{ fn(); } finally { state = keep; }
 }
 function renderOrders(){
@@ -1719,7 +1724,7 @@ window.BronCloudBridge = {
 };
 </script>
 <script src="cloud-sync-core.js?v=1"></script>
-<script src="cloud-data.js?v=4"></script>
+<script src="cloud-data.js?v=5"></script>
 <script src="yandex-disk.js?v=1"></script>
 <script src="cloud-sync.js?v=1"></script>
 <script>

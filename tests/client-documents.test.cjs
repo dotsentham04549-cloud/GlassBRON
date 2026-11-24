@@ -57,6 +57,21 @@ test('opening a legacy client cannot carry over another client contract terms',(
  assert.equal(s.contractNo,'');assert.equal(s.contractMaterial,'');assert.equal(s.contractReceived,'');
 });
 
+test('city inclusion survives cloud sync and appears as free travel in the contract and act',()=>{
+ const {s,defaults,fields}=app(),tools=Data.createTools(defaults,fields);
+ const data={settings:s,objects:{},orders:[]};
+ assert.equal(tools.snapshot(data).settings.cityBundled,true);
+ const old={...s};delete old.cityBundled;
+ assert.equal(tools.snapshot({...data,settings:old}).settings.cityBundled,false);
+ const oldOrder={kind:'final',no:'old',date:'2026-11-24',total:6000,area:3,snap:old};
+ assert.equal(tools.snapshot({...data,orders:[oldOrder]}).orders[0].snap.cityBundled,false);
+ for(const kind of ['contract','act']){
+  const render=figures=>D.render(D.model(kind,{settings:s,figures}));
+  assert.ok(render({cityBundled:true,revenue:6800}).includes('Выезд по городу — бесплатно, отдельно не оплачивается.'));
+  assert.ok(!render({cityBundled:false,revenue:6000}).includes('Выезд по городу — бесплатно'));
+ }
+});
+
 test('mounting mode survives cloud sync while legacy settings keep four beads',()=>{
  const {s,defaults,fields}=app(),tools=Data.createTools(defaults,fields);
  s.beadSides='3';s.bead3Factor='85';
