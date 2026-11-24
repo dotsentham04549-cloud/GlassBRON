@@ -29,6 +29,7 @@ function app(){
     globalThis.api = {
       get state(){ return state; },
       reset(patch = {}){ state = Object.assign(clone(DEFAULTS), patch); },
+      active(patch = {}){ state = ensureMaterials(Object.assign(clone(DEFAULTS), patch)); },
       figures, snapshot, withSnapshot, restoreObject,
       summary(){ const F = figures(); renderSummary(F, {total:400}, 0, F.Wm * 100); },
       print(kind){ printClient({no:'test', date:'2026-11-11'}, kind); }
@@ -163,7 +164,7 @@ test('customer documents specify the mounting method for each tariff',()=>{
  }
 });
 
-test('three tariffs fix their mounting method and include optimal surcharge only once',()=>{
+test('historical tariff formulas stay compatible while the interface offers two tariffs',()=>{
  const {api}=app();
  const panes=[{n:'Window',h:'100',w:'100',q:'1',bead:false}];
  for(const [tariff,revenue,beads,rate,name] of [['std',2000,0,450,'Стандарт'],['opt',2375,1,600,'Оптимальный'],['prot',2500,1,650,'Защита']]){
@@ -171,13 +172,34 @@ test('three tariffs fix their mounting method and include optimal surcharge only
   const f=api.figures();assert.equal(f.revenue,revenue);assert.equal(f.beads,beads);
   assert.equal(beads?f.laborBead:f.labor,rate);assert.equal(f.beadRev,0);assert.equal(f.tariffName,name);
  }
- assert.equal((html.match(/<input type="radio" name="tariff"/g)||[]).length,3);
+ assert.equal((html.match(/<input type="radio" name="tariff"/g)||[]).length,2);
+ assert.ok(!html.includes('value="opt"'));
+ assert.ok(!html.includes('data-k="bead3Factor"'));
  assert.ok(!html.includes('id="beadAll"'));assert.ok(!html.includes('class="mount-options"'));
 });
 
-test('the previous three-bead protection selection migrates to optimal at the same price',()=>{
+test('active saved calculations and objects use four beads at the full existing rates',()=>{
  const {api}=app();
- api.reset({panes:[{n:'Window',h:'100',w:'100',q:'1',bead:false}],minOrder:'0',freeFrom:'0',roundMode:'none'});
- api.restoreObject({tariff:'prot',beadSides:'3',panes:api.state.panes});
- assert.equal(api.state.tariff,'opt');assert.equal(api.figures().revenue,2375);
+ const patch={panes:[{n:'Window',h:'100',w:'100',q:'1',bead:true}],minOrder:'0',freeFrom:'0',roundMode:'none'};
+ for(const tariff of ['std','opt','prot']){
+  api.active({...patch,tariff,beadSides:'3',bead3Factor:'0'});
+  assert.equal(api.state.tariff,tariff==='std'?'std':'prot');
+  assert.equal(api.figures().beadSides,4);assert.equal(api.figures().laborBead,650);
+  assert.equal(api.figures().revenue,tariff==='std'?2400:2500);
+  api.restoreObject({tariff,beadSides:'3',bead3Factor:'0',panes:patch.panes});
+  assert.equal(api.figures().beadSides,4);assert.equal(api.figures().revenue,tariff==='std'?2400:2500);
+ }
+});
+
+test('issued three-bead documents retain their original amounts and do not alter the editor',()=>{
+ const {api,context}=app();
+ const patch={panes:[{n:'Window',h:'100',w:'100',q:'1',bead:true}],minOrder:'0',freeFrom:'0',roundMode:'none'};
+ api.active({...patch,tariff:'prot'});
+ for(const [tariff,total] of [['std',2300],['opt',2375],['prot',2375]]){
+  api.withSnapshot({...api.snapshot(),tariff,beadSides:'3',bead3Factor:'75'},()=>{
+   assert.equal(api.figures().revenue,total);api.print('final');
+   assert.ok(context.printed.output.includes('под 3 штапика, без верхнего'));
+  });
+  assert.equal(api.state.tariff,'prot');assert.equal(api.figures().revenue,2500);
+ }
 });

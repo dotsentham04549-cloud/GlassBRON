@@ -77,7 +77,7 @@ textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 button:disabled{opacity:.45;cursor:default}
 a.btnlink{display:inline-flex;align-items:center;font-size:14px;font-weight:500;border-radius:4px;padding:9px 14px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);text-decoration:none}
 a.btnlink[aria-disabled=true]{opacity:.45;pointer-events:none}
-.tariffs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.tariffs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 14px}
 .tariffs label{display:block;cursor:pointer}
 .tariffs input{position:absolute;opacity:0;pointer-events:none}
 .tariffs span{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:4px;background:var(--field)}
@@ -478,12 +478,11 @@ button.x{box-shadow:none}
           <h2 class="kicker">Стоимость и скидка</h2>
           <div class="tariffs" role="radiogroup" aria-label="Тариф">
             <label><input type="radio" name="tariff" value="std"><span><b>Стандарт</b><small id="tStd"></small><em>По видимой части стекла</em></span></label>
-            <label><input type="radio" name="tariff" value="opt"><span><b>Оптимальный</b><small id="tOpt"></small><em>3 штапика, без верхнего</em></span></label>
             <label><input type="radio" name="tariff" value="prot"><span><b>Защита</b><small id="tProt"></small><em>Все 4 штапика</em></span></label>
           </div>
 <div class="fields"><label class="f">Скидка<input data-k="discountValue" inputmode="decimal" placeholder="0"></label><label class="f">Вид скидки<select data-s="discountMode"><option value="percent">В процентах, %</option><option value="rub">В рублях, ₽</option></select></label></div><details class="calculation-details"><summary>Тарифы, доплаты и округление</summary><div class="fields"><label class="f">Стандарт: работа, ₽/м²<input data-k="workPrice" inputmode="decimal"></label><label class="f">Защита: работа под 4 штапика, ₽/м²<input data-k="workProt" inputmode="decimal"></label><label class="f">Мин. площадь стекла, м²<input data-k="minArea" inputmode="decimal"></label><label class="f">Мин. заказ, ₽<input data-k="minOrder" inputmode="decimal"></label><label class="f">Под 4 штапика, ₽/створка<input data-k="beadClient" inputmode="decimal"></label><label class="f">Доп. работы, ₽<input data-k="extra" inputmode="decimal"></label><label class="f">Округление итога<select data-s="roundMode"><option value="none">Не округлять</option><option value="down">Вниз, в пользу клиента</option><option value="nearest">До ближайшего</option></select></label><label class="f">Шаг округления<select data-s="roundStep"><option value="10">10 ₽</option><option value="50">50 ₽</option><option value="100">100 ₽</option></select></label></div></details>
 <details class="calculation-details"><summary>Как считается цена и скидка</summary>          <p class="note">Скидка применяется к итогу после округления, включая выезд, и уменьшает прибыль компании. Оплата мастеру за работу, штапики и дорогу не меняется. Скидка считается до целого рубля, максимум — вся сумма заказа.</p>
-          <p class="note">«Стандарт» — штапики для отмеченных стёкол за отдельную доплату. «Оптимальный» — все стёкла под 3 штапика без верхнего. «Защита» — все стёкла под 4 штапика. В обоих тарифах монтаж включён в ставку за м².</p>
+          <p class="note">«Стандарт» — оклейка по видимой части стекла; монтаж под все 4 штапика для отмеченных стёкол за отдельную доплату. «Защита» — монтаж всех стёкол под все 4 штапика, включённый в ставку за м².</p>
           <p class="note">Клиенту цена складывается из работы и материала (цена материала задаётся в блоке «Материал»). Стекло меньше минимальной площади считается как минимальная площадь — и для клиента, и для оплаты мастеру.</p>
         </details></section>        <section class="card">
           <h2 class="kicker">Выезд</h2>
@@ -578,9 +577,8 @@ button.x{box-shadow:none}
             <label class="f">Мастеру за м², ₽<input data-k="labor" inputmode="decimal"></label>
             <label class="f">Мастеру под 4 штапика, ₽/м²<input data-k="laborBead" inputmode="decimal"></label>
             <label class="f">Мастеру за дорогу, %<input data-k="masterPct" inputmode="decimal"></label>
-            <label class="f">Расходники, ₽/м²<input data-k="cons" inputmode="decimal"></label><label class="f">Доплата для 3 штапиков, % от варианта с 4<input data-k="bead3Factor" inputmode="decimal" placeholder="75"></label>
+            <label class="f">Расходники, ₽/м²<input data-k="cons" inputmode="decimal"></label>
           </div>
-          <p class="note">Для 3 штапиков по умолчанию берётся 75% только доплаты за штапики. Основная оклейка не уменьшается. Для одинаковой оплаты за 3 и 4 поставьте 100%. Ставки под 4 штапика остаются исходными.</p>
           <p class="note">Запас добавляется к каждой стороне стекла: кусок плёнки больше стекла на два запаса по высоте и по ширине.</p>
         </section></div><div class="stack">        <details class="card">
           <summary><h2 class="kicker">Реквизиты для заказа</h2></summary>
@@ -639,15 +637,21 @@ function restoreObject(o){
   OBJ_FIELDS.forEach(k => { if (o[k] !== undefined) state[k] = clone(o[k]); });
   state.beadSides = o.beadSides === '3' ? '3' : '4';
   state.bead3Factor = o.bead3Factor ?? DEFAULTS.bead3Factor;
-  if(state.tariff === 'prot' && state.beadSides === '3') state.tariff='opt';
+  if(state.tariff === 'opt') state.tariff='prot';
+  state.beadSides='4';
   // Older objects have no discount; never carry a different client's discount over.
   state.discountMode = o.discountMode || DEFAULTS.discountMode;
   state.discountValue = o.discountValue ?? DEFAULTS.discountValue;
 }
 const OWN_MAT = {id:'own', name:'Материал заказчика', rollPrice:'0', rollW:'1.52', rollL:'30', sell:'0'};
-function ensureMaterials(st){
-  // v25 used Protection + 3 beads for this exact price; retain it as Optimal.
-  if(st.tariff === 'prot' && st.beadSides === '3') st.tariff='opt';
+function ensureMaterials(st, historical = false){
+  // Preserve issued documents; active calculations now offer four beads only.
+  if(historical){
+    if(st.tariff === 'prot' && st.beadSides === '3') st.tariff='opt';
+  }else{
+    if(st.tariff === 'opt') st.tariff='prot';
+    st.beadSides='4';
+  }
   if (!Array.isArray(st.materials) || !st.materials.length){
     st.materials = [{id:'m1', name: st.material || 'Бронирующая плёнка 210 мкм, прозрачная', rollPrice: st.rollPrice || '18000', rollW: st.rollW || '1.52', rollL: st.rollL || '30', sell:'800'}, clone(OWN_MAT)];
   }
@@ -709,7 +713,7 @@ document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.a
 }));
 document.querySelectorAll('input[name="zone"]').forEach(rb => rb.addEventListener('change', () => { state.zone = rb.value; save(); schedule(true); }));
 $('splitLines').addEventListener('change', e => { state.splitLines = e.target.checked; save(); });
-document.querySelectorAll('input[name="tariff"]').forEach(rb => rb.addEventListener('change', () => { state.tariff = rb.value; state.beadSides = rb.value === 'opt' ? '3' : '4'; save(); renderPanes(); schedule(); }));
+document.querySelectorAll('input[name="tariff"]').forEach(rb => rb.addEventListener('change', () => { state.tariff = rb.value; state.beadSides = '4'; save(); renderPanes(); schedule(); }));
 function syncInputs(){
   document.querySelectorAll('select[data-s]').forEach(el => el.value = state[el.dataset.s] ?? DEFAULTS[el.dataset.s]);
   document.querySelectorAll('input[data-k],textarea[data-k]').forEach(inp => inp.value = state[inp.dataset.k] ?? '');
@@ -1121,10 +1125,8 @@ function rounding(v){
 }
 
 function tariffLabels(){
-  const sell=num(mat().sell), base=num(state.workPrice), extra=num(state.workProt)-base;
-  const factor=Math.min(100,Math.max(0,num(state.bead3Factor ?? 75)))/100;
-  $('tStd').textContent=`${fmt(base+sell)} ₽/м²`;
-  $('tOpt').textContent=`${fmt(base+extra*factor+sell)} ₽/м²`;
+  const sell=num(mat().sell);
+  $('tStd').textContent=`${fmt(num(state.workPrice)+sell)} ₽/м²`;
   $('tProt').textContent=`${fmt(num(state.workProt)+sell)} ₽/м²`;
 }
 
@@ -1475,7 +1477,7 @@ function newOrder(kind){
   list.unshift(rec); saveOrders(list); renderOrders(); return rec;
 }
 function withSnapshot(snap, fn){
-  const keep = state; state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined, beadSides:'4'}, clone(snap)));
+  const keep = state; state = ensureMaterials(Object.assign(clone(DEFAULTS), {roundMode:'none', materials:undefined, workPrice:undefined, beadSides:'4'}, clone(snap)), true);
   try{ fn(); } finally { state = keep; }
 }
 function renderOrders(){
